@@ -42,6 +42,8 @@
      Fires once per checkout page load.
      sessionStorage guard prevents re-fire on back-button navigation.
      GTM trigger: Custom Event — event name = "begin_checkout"
+     Fix #3: item_category now sends 'E-Library'/'Physical Book'
+             instead of raw 'pdf'/'book'
 ════════════════════════════════════════════════════════════════════════════ -->
 <script>
 (function() {
@@ -60,7 +62,7 @@
           {% for item in cart_items %}{
             item_id: '{{ item.id }}',
             item_name: '{{ item.name|escapejs }}',
-            item_category: '{{ item.item_type|escapejs }}',
+            item_category: '{% if item.item_type == "pdf" %}E-Library{% else %}Physical Book{% endif %}',
             price: {{ item.price }},
             quantity: 1
           }{% if not forloop.last %},{% endif %}
@@ -150,7 +152,7 @@
         </div>
 
         <button type="button" id="payBtn" class="place-order-btn">🔒 Pay ₹{{ grand_total }} with Razorpay</button>
-        <div class="safe-note">🔒 100% Secure & Encrypted</div>
+        <div class="safe-note">🔒 100% Secure &amp; Encrypted</div>
       </div>
 
     </div>
@@ -214,6 +216,7 @@ document.getElementById('payBtn').addEventListener('click', function() {
       theme: { color: '#1a3a8f' },
       handler: function(response) {
         // Step 3: Verify payment
+        // Fix #2: Added .catch() so network failures don't silently block redirect
         fetch('{% url "razorpay_verify_payment" %}', {
           method: 'POST',
           headers: {
@@ -232,8 +235,14 @@ document.getElementById('payBtn').addEventListener('click', function() {
           if (vdata.success) {
             window.location.href = vdata.redirect_url;
           } else {
-            alert('Payment verification failed: ' + (vdata.error || 'Unknown error'));
+            alert('Payment verification failed: ' + (vdata.error || 'Unknown error. Please contact support.'));
           }
+        })
+        .catch(function(err) {
+          // Network error during verify — payment likely went through, redirect to safety
+          console.error('Payment verify network error:', err);
+          alert('Payment received! Redirecting to your purchases. If your order is missing, please contact support.');
+          window.location.href = '{% url "my_purchases" %}';
         });
       },
       modal: {
@@ -250,9 +259,9 @@ document.getElementById('payBtn').addEventListener('click', function() {
     var rzp = new Razorpay(options);
     rzp.open();
   })
-  .catch(err => {
-    alert('Network error. Please try again.');
-    console.error(err);
+  .catch(function(err) {
+    alert('Network error. Please check your connection and try again.');
+    console.error('Create order error:', err);
   });
 });
 </script>
