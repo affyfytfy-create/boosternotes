@@ -256,7 +256,7 @@
 <div class="ty-page">
   <div class="ty-card">
 
-    <!-- ── Hero ── -->
+    <!-- Hero -->
     <div class="ty-hero">
       <div class="ty-check-wrap">
         <svg viewBox="0 0 52 52">
@@ -268,7 +268,7 @@
       A confirmation has been noted for <strong>{{ order.email }}</strong>.</p>
     </div>
 
-    <!-- ── Body ── -->
+    <!-- Body -->
     <div class="ty-body">
 
       <!-- Order Reference -->
@@ -386,19 +386,15 @@
         Order reference: <strong>#{{ order.order_number }}</strong>
       </div>
 
-    </div><!-- /.ty-body -->
-  </div><!-- /.ty-card -->
-</div><!-- /.ty-page -->
+    </div>
+  </div>
+</div>
 
-<!-- ═══════════════════════════════════════════════════════════════════════════
-     GA4 Standard Ecommerce — purchase event
-     ✅ FIX: Placed at BOTTOM of {% block content %}, AFTER all HTML,
-     so GTM container has fully initialized before this fires.
-     Previously this was at the TOP of the block, causing GTM to miss the event.
-
-     Guarded by sessionStorage so back-button revisit does NOT re-fire.
-     GTM trigger: Custom Event — event name = "purchase"
-════════════════════════════════════════════════════════════════════════════ -->
+<!-- GA4 purchase dataLayer push
+     Placed at bottom so GTM has fully initialized before this fires.
+     sessionStorage guard prevents re-fire on back-button revisit.
+     GTM trigger: Custom Event with event name = purchase
+-->
 <script>
 (function() {
   try {
@@ -440,7 +436,6 @@
   var ctx = canvas.getContext('2d');
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-
   var pieces = [];
   var colors = ['#1a3a8f','#0d6efd','#1a7a45','#ffd700','#ff6b6b','#4ecdc4','#a29bfe','#fd79a8'];
   for (var i = 0; i < 140; i++) {
@@ -457,7 +452,6 @@
       opacity: Math.random() * .5 + .5
     });
   }
-
   var frame = 0;
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -472,10 +466,7 @@
       p.y += p.speed;
       p.x += p.drift;
       p.angle += p.spin;
-      if (p.y > canvas.height) {
-        p.y = -20;
-        p.x = Math.random() * canvas.width;
-      }
+      if (p.y > canvas.height) { p.y = -20; p.x = Math.random() * canvas.width; }
     });
     frame++;
     if (frame < 220) requestAnimationFrame(draw);
