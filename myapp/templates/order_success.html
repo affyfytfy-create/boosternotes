@@ -1,51 +1,409 @@
 {% extends 'index.html' %}
 {% load static %}
 
-{% block title %}Order Confirmed - BoosterNotes{% endblock %}
+{% block title %}Order Confirmed — Thank You! | BoosterNotes{% endblock %}
 
 {% block content %}
 <style>
-.success-page { min-height:70vh; background:#f5f7fb; display:flex; align-items:center; justify-content:center; padding:40px 16px; }
-.success-card { background:#fff; border-radius:24px; border:1px solid #e0e8f0; box-shadow:0 10px 40px rgba(26,58,143,.08); padding:48px 40px; max-width:560px; width:100%; text-align:center; }
-.success-icon { font-size:4rem; margin-bottom:16px; animation:pop .4s ease; }
-@keyframes pop { from{transform:scale(.6);opacity:0} to{transform:scale(1);opacity:1} }
-.success-card h1 { font-size:1.8rem; font-weight:900; color:#1a7a45; margin-bottom:8px; }
-.success-card .sub { font-size:.88rem; color:#888; margin-bottom:28px; line-height:1.6; }
-.order-ref-box { background:#f0f4ff; border:1px solid #c8d8ff; border-radius:12px; padding:16px 20px; margin-bottom:24px; }
-.order-ref-box .label { font-size:.72rem; color:#888; font-weight:600; text-transform:uppercase; margin-bottom:4px; }
-.order-ref-box .ref { font-size:1.4rem; font-weight:900; color:#1a3a8f; letter-spacing:2px; }
-.order-items { text-align:left; margin-bottom:28px; }
-.order-items h3 { font-size:.8rem; font-weight:700; color:#aaa; text-transform:uppercase; margin-bottom:12px; }
-.oi-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #f5f5f5; }
-.oi-row:last-child { border-bottom:none; }
-.oi-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
-.oi-icon.pdf  { background:#eef2ff; }
-.oi-icon.book { background:#fff0f5; }
-.oi-name { flex:1; font-size:.82rem; font-weight:600; color:#333; }
-.oi-price { font-size:.82rem; font-weight:700; color:#1a3a8f; }
-.oi-badge { font-size:.65rem; font-weight:700; padding:2px 8px; border-radius:999px; margin-left:6px; }
-.badge-pdf  { background:#e6f9ef; color:#1a7a45; }
-.badge-book { background:#ffe8f0; color:#c0392b; }
-.success-actions { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
-.sa-btn { display:inline-flex; align-items:center; gap:7px; padding:11px 22px; border-radius:10px; font-size:.85rem; font-weight:700; text-decoration:none; transition:opacity .15s; }
-.sa-primary { background:linear-gradient(135deg,#1a3a8f,#0d6efd); color:#fff; }
-.sa-secondary { background:#f5f5f5; color:#444; border:1px solid #e0e0e0; }
-.sa-btn:hover { opacity:.85; }
-.delivery-note { background:#fff8e6; border:1px solid #ffe0a0; border-radius:10px; padding:12px 16px; font-size:.8rem; color:#856404; text-align:left; margin-bottom:24px; line-height:1.6; }
-@media(max-width:480px){ .success-card{padding:32px 20px;} .success-actions{flex-direction:column;} }
+/* ── Page Shell ─────────────────────────────────────────── */
+.ty-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0f4ff 0%, #f8fff4 50%, #fff8f0 100%);
+  padding: 40px 16px 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Confetti Canvas ────────────────────────────────────── */
+#confetti-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ── Main Card ──────────────────────────────────────────── */
+.ty-card {
+  max-width: 640px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 28px;
+  border: 1px solid #e4eaf8;
+  box-shadow: 0 20px 60px rgba(26,58,143,.10), 0 4px 16px rgba(0,0,0,.04);
+  overflow: hidden;
+}
+
+/* ── Hero Banner ────────────────────────────────────────── */
+.ty-hero {
+  background: linear-gradient(135deg, #1a3a8f 0%, #0d6efd 60%, #1a7a45 100%);
+  padding: 44px 32px 36px;
+  text-align: center;
+  position: relative;
+}
+.ty-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -1px; left: 0; right: 0;
+  height: 32px;
+  background: #fff;
+  border-radius: 32px 32px 0 0;
+}
+
+/* ── Animated Checkmark ─────────────────────────────────── */
+.ty-check-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px; height: 88px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.18);
+  margin-bottom: 18px;
+  animation: popIn .5s cubic-bezier(.34,1.56,.64,1) both;
+}
+.ty-check-wrap svg { width: 48px; height: 48px; }
+.ty-check-path {
+  stroke: #fff;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  animation: drawCheck .6s .4s ease forwards;
+}
+@keyframes drawCheck { to { stroke-dashoffset: 0; } }
+@keyframes popIn { from{transform:scale(.4);opacity:0} to{transform:scale(1);opacity:1} }
+
+.ty-hero h1 {
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: #fff;
+  margin: 0 0 6px;
+  letter-spacing: -.3px;
+}
+.ty-hero .ty-sub {
+  font-size: .88rem;
+  color: rgba(255,255,255,.82);
+  line-height: 1.6;
+}
+.ty-hero strong { color: #fff; }
+
+/* ── Card Body ──────────────────────────────────────────── */
+.ty-body { padding: 32px 32px 36px; }
+
+/* ── Order Reference Box ────────────────────────────────── */
+.ty-ref-box {
+  background: linear-gradient(135deg, #f0f4ff, #eef9f4);
+  border: 1.5px solid #c8d8ff;
+  border-radius: 14px;
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+.ty-ref-left .lbl { font-size: .68rem; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+.ty-ref-left .ref-num { font-size: 1.45rem; font-weight: 900; color: #1a3a8f; letter-spacing: 2px; }
+.ty-ref-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.ty-amount { font-size: 1.3rem; font-weight: 900; color: #1a7a45; }
+.ty-paid-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #e6f9ef; color: #1a7a45;
+  font-size: .68rem; font-weight: 700;
+  padding: 3px 10px; border-radius: 999px;
+  border: 1px solid #b8ead0;
+}
+
+/* ── Section Heading ────────────────────────────────────── */
+.ty-section-title {
+  font-size: .7rem; font-weight: 700; color: #bbb;
+  text-transform: uppercase; letter-spacing: .6px;
+  margin: 0 0 14px;
+}
+
+/* ── Items List ─────────────────────────────────────────── */
+.ty-items { margin-bottom: 28px; }
+.ty-item-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+.ty-item-row:last-child { border-bottom: none; }
+.ty-item-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; flex-shrink: 0;
+}
+.ty-item-icon.pdf  { background: #eef2ff; }
+.ty-item-icon.book { background: #fff0f5; }
+.ty-item-info { flex: 1; min-width: 0; }
+.ty-item-name { font-size: .82rem; font-weight: 700; color: #222; line-height: 1.35; }
+.ty-item-type {
+  display: inline-block; font-size: .62rem; font-weight: 700;
+  padding: 2px 8px; border-radius: 999px; margin-top: 3px;
+}
+.type-pdf  { background: #e6f9ef; color: #1a7a45; }
+.type-book { background: #ffe8f0; color: #c0392b; }
+.ty-item-price { font-size: .88rem; font-weight: 800; color: #1a3a8f; flex-shrink: 0; }
+
+/* ── Price Summary ──────────────────────────────────────── */
+.ty-price-summary {
+  background: #f8faff;
+  border: 1px solid #e8edf8;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 28px;
+}
+.ty-price-row {
+  display: flex; justify-content: space-between;
+  font-size: .8rem; color: #666;
+  padding: 5px 0;
+}
+.ty-price-row.discount { color: #1d9e75; font-weight: 600; }
+.ty-price-row.total {
+  font-size: .98rem; font-weight: 900; color: #1a3a8f;
+  border-top: 1.5px dashed #e0e6f8;
+  padding-top: 12px; margin-top: 6px;
+}
+
+/* ── Timeline ───────────────────────────────────────────── */
+.ty-timeline { margin-bottom: 28px; }
+.ty-tl-item {
+  display: flex; align-items: flex-start; gap: 14px;
+  position: relative; padding-bottom: 18px;
+}
+.ty-tl-item:last-child { padding-bottom: 0; }
+.ty-tl-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 15px; top: 30px;
+  width: 2px; height: calc(100% - 14px);
+  background: linear-gradient(to bottom, #c8d8ff, #e8f4ee);
+}
+.ty-tl-dot {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .95rem;
+  border: 2px solid #e0e8f8;
+  background: #fff;
+  position: relative; z-index: 1;
+}
+.ty-tl-dot.done { background: #e6f9ef; border-color: #b8ead0; }
+.ty-tl-dot.active { background: #eef2ff; border-color: #c8d8ff; animation: pulse 2s infinite; }
+.ty-tl-dot.pending { background: #f8f8f8; border-color: #e8e8e8; }
+@keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(26,58,143,.25)} 50%{box-shadow:0 0 0 6px rgba(26,58,143,0)} }
+.ty-tl-text .tl-title { font-size: .82rem; font-weight: 700; color: #222; }
+.ty-tl-text .tl-desc  { font-size: .73rem; color: #999; margin-top: 2px; line-height: 1.5; }
+
+/* ── Delivery / Access Notes ────────────────────────────── */
+.ty-notice {
+  border-radius: 12px; padding: 14px 16px;
+  font-size: .79rem; line-height: 1.65;
+  margin-bottom: 16px;
+  display: flex; gap: 10px; align-items: flex-start;
+}
+.ty-notice .notice-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+.ty-notice.physical { background: #fff8e6; border: 1px solid #ffe0a0; color: #856404; }
+.ty-notice.digital  { background: #eef9ff; border: 1px solid #b8d9ff; color: #1a5276; }
+.ty-notice strong { font-weight: 800; }
+
+/* ── Actions ────────────────────────────────────────────── */
+.ty-actions {
+  display: flex; gap: 12px; justify-content: center;
+  flex-wrap: wrap; margin-top: 8px;
+}
+.ty-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 12px 24px; border-radius: 12px;
+  font-size: .85rem; font-weight: 800;
+  text-decoration: none; transition: all .2s;
+  letter-spacing: .2px;
+}
+.ty-btn-primary {
+  background: linear-gradient(135deg,#1a3a8f,#0d6efd);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(13,110,253,.3);
+}
+.ty-btn-primary:hover { opacity: .88; transform: translateY(-1px); color: #fff; }
+.ty-btn-secondary {
+  background: #f5f5f5; color: #444;
+  border: 1px solid #e0e0e0;
+}
+.ty-btn-secondary:hover { background: #ebebeb; color: #222; }
+
+/* ── Footer note ────────────────────────────────────────── */
+.ty-footer-note {
+  text-align: center; font-size: .72rem; color: #bbb;
+  margin-top: 20px; line-height: 1.7;
+}
+
+@media(max-width: 520px) {
+  .ty-body { padding: 24px 18px 28px; }
+  .ty-hero { padding: 32px 20px 30px; }
+  .ty-hero h1 { font-size: 1.45rem; }
+  .ty-actions { flex-direction: column; }
+  .ty-ref-box { flex-direction: column; align-items: flex-start; }
+  .ty-ref-right { align-items: flex-start; }
+}
 </style>
+
+<!-- Confetti Canvas -->
+<canvas id="confetti-canvas"></canvas>
+
+<div class="ty-page">
+  <div class="ty-card">
+
+    <!-- ── Hero ── -->
+    <div class="ty-hero">
+      <div class="ty-check-wrap">
+        <svg viewBox="0 0 52 52">
+          <polyline class="ty-check-path" points="14,27 22,36 38,17"/>
+        </svg>
+      </div>
+      <h1>🎉 Thank You, {{ order.full_name|default:"Friend" }}!</h1>
+      <p class="ty-sub">Your payment was successful and your order is confirmed.<br>
+      A confirmation has been noted for <strong>{{ order.email }}</strong>.</p>
+    </div>
+
+    <!-- ── Body ── -->
+    <div class="ty-body">
+
+      <!-- Order Reference -->
+      <div class="ty-ref-box">
+        <div class="ty-ref-left">
+          <div class="lbl">Order Confirmed</div>
+          <div class="ref-num">#{{ order.order_number }}</div>
+        </div>
+        <div class="ty-ref-right">
+          <div class="ty-amount">₹{{ order.grand_total }}</div>
+          <div class="ty-paid-badge">✅ PAID</div>
+        </div>
+      </div>
+
+      <!-- Items -->
+      {% if order.items.all %}
+      <div class="ty-items">
+        <div class="ty-section-title">🛒 Items in Your Order</div>
+        {% for item in order.items.all %}
+        <div class="ty-item-row">
+          <div class="ty-item-icon {{ item.item_type }}">
+            {% if item.item_type == 'pdf' %}📄{% else %}📚{% endif %}
+          </div>
+          <div class="ty-item-info">
+            <div class="ty-item-name">{{ item.item_name }}</div>
+            <span class="ty-item-type {% if item.item_type == 'pdf' %}type-pdf{% else %}type-book{% endif %}">
+              {% if item.item_type == 'pdf' %}E-Library{% else %}Hardcopy{% endif %}
+            </span>
+          </div>
+          <div class="ty-item-price">₹{{ item.item_price }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Price Summary -->
+      <div class="ty-price-summary">
+        <div class="ty-price-row"><span>Subtotal</span><span>₹{{ order.subtotal }}</span></div>
+        {% if order.discount_amount and order.discount_amount > 0 %}
+        <div class="ty-price-row discount">
+          <span>🎟️ Coupon{% if order.coupon %} ({{ order.coupon.code }}){% endif %}</span>
+          <span>−₹{{ order.discount_amount }}</span>
+        </div>
+        {% endif %}
+        <div class="ty-price-row total"><span>Total Paid</span><span>₹{{ order.grand_total }}</span></div>
+      </div>
+
+      <!-- Order Timeline -->
+      <div class="ty-timeline">
+        <div class="ty-section-title">📦 Order Status</div>
+
+        <div class="ty-tl-item">
+          <div class="ty-tl-dot done">✅</div>
+          <div class="ty-tl-text">
+            <div class="tl-title">Payment Confirmed</div>
+            <div class="tl-desc">Your payment of ₹{{ order.grand_total }} was received successfully.</div>
+          </div>
+        </div>
+
+        {% if order.has_digital_items %}
+        <div class="ty-tl-item">
+          <div class="ty-tl-dot done">🔓</div>
+          <div class="ty-tl-text">
+            <div class="tl-title">E-Library Access Unlocked</div>
+            <div class="tl-desc">Your digital content is now available. Click "My Purchases" to access it instantly.</div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if order.has_physical_items %}
+        <div class="ty-tl-item">
+          <div class="ty-tl-dot active">📦</div>
+          <div class="ty-tl-text">
+            <div class="tl-title">Order Being Processed</div>
+            <div class="tl-desc">Your physical book(s) are being packed for dispatch.</div>
+          </div>
+        </div>
+        <div class="ty-tl-item">
+          <div class="ty-tl-dot pending">🚚</div>
+          <div class="ty-tl-text">
+            <div class="tl-title">Dispatched &amp; Delivered</div>
+            <div class="tl-desc">Expected within 3–5 working days to {{ order.city }}{% if order.state %}, {{ order.state }}{% endif %}.</div>
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+
+      <!-- Delivery / Access Notices -->
+      {% if order.has_physical_items %}
+      <div class="ty-notice physical">
+        <div class="notice-icon">📦</div>
+        <div><strong>Delivery:</strong> Your physical book(s) will be dispatched to
+          <strong>{{ order.address }}, {{ order.city }}, {{ order.state }} – {{ order.pincode }}</strong>
+          within 3–5 working days. You will receive a WhatsApp update.</div>
+      </div>
+      {% endif %}
+
+      {% if order.has_digital_items %}
+      <div class="ty-notice digital">
+        <div class="notice-icon">💻</div>
+        <div><strong>E-Library Access:</strong> Your purchased course(s) are now unlocked.
+          Go to the course page and click <strong>"Access Course"</strong> to start reading immediately.</div>
+      </div>
+      {% endif %}
+
+      <!-- Action Buttons -->
+      <div class="ty-actions">
+        <a href="{% url 'home' %}" class="ty-btn ty-btn-secondary">🏠 Back to Home</a>
+        <a href="{% url 'my_purchases' %}" class="ty-btn ty-btn-primary">📦 Go to My Purchases</a>
+      </div>
+
+      <div class="ty-footer-note">
+        Need help? Contact us on WhatsApp or email.<br>
+        Order reference: <strong>#{{ order.order_number }}</strong>
+      </div>
+
+    </div><!-- /.ty-body -->
+  </div><!-- /.ty-card -->
+</div><!-- /.ty-page -->
 
 <!-- ═══════════════════════════════════════════════════════════════════════════
      GA4 Standard Ecommerce — purchase event
-     Fires ONCE per confirmed order. Guarded by sessionStorage key on order_id
-     so a back-button revisit does NOT re-fire the event.
+     ✅ FIX: Placed at BOTTOM of {% block content %}, AFTER all HTML,
+     so GTM container has fully initialized before this fires.
+     Previously this was at the TOP of the block, causing GTM to miss the event.
+
+     Guarded by sessionStorage so back-button revisit does NOT re-fire.
      GTM trigger: Custom Event — event name = "purchase"
-     Required fields: transaction_id, value, currency, items[]
 ════════════════════════════════════════════════════════════════════════════ -->
 <script>
 (function() {
-  var purchaseKey = 'bn_purchase_fired_{{ order.id }}';
-  if (!sessionStorage.getItem(purchaseKey)) {
+  try {
+    var purchaseKey = 'bn_purchase_fired_{{ order.id }}';
+    if (sessionStorage.getItem(purchaseKey)) return;
     sessionStorage.setItem(purchaseKey, '1');
     window.dataLayer = window.dataLayer || [];
     dataLayer.push({ ecommerce: null });
@@ -68,55 +426,67 @@
         ]
       }
     });
+  } catch(e) {
+    console.warn('GTM purchase push failed:', e);
   }
 })();
 </script>
 
-<div class="success-page">
-  <div class="success-card">
-    <div class="success-icon">✅</div>
-    <h1>Payment Successful!</h1>
-    <p class="sub">Thank you, <strong>{{ order.full_name }}</strong>! Your order has been confirmed and is being processed.</p>
+<!-- Confetti Animation -->
+<script>
+(function() {
+  var canvas = document.getElementById('confetti-canvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 
-    <div class="order-ref-box">
-      <div class="label">Order Number</div>
-      <div class="ref">#{{ order.order_number }}</div>
-    </div>
+  var pieces = [];
+  var colors = ['#1a3a8f','#0d6efd','#1a7a45','#ffd700','#ff6b6b','#4ecdc4','#a29bfe','#fd79a8'];
+  for (var i = 0; i < 140; i++) {
+    pieces.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height - canvas.height,
+      w: Math.random() * 10 + 5,
+      h: Math.random() * 5 + 3,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      angle: Math.random() * 360,
+      speed: Math.random() * 3 + 1.5,
+      spin: (Math.random() - .5) * 6,
+      drift: (Math.random() - .5) * 1.5,
+      opacity: Math.random() * .5 + .5
+    });
+  }
 
-    {% if order.items.all %}
-    <div class="order-items">
-      <h3>Items Ordered</h3>
-      {% for item in order.items.all %}
-      <div class="oi-row">
-        <div class="oi-icon {{ item.item_type }}">{% if item.item_type == 'pdf' %}📄{% else %}📚{% endif %}</div>
-        <div class="oi-name">
-          {{ item.item_name }}
-          <span class="oi-badge {% if item.item_type == 'pdf' %}badge-pdf{% else %}badge-book{% endif %}">
-            {% if item.item_type == 'pdf' %}E-Library{% else %}Hardcopy{% endif %}
-          </span>
-        </div>
-        <div class="oi-price">₹{{ item.item_price }}</div>
-      </div>
-      {% endfor %}
-    </div>
-    {% endif %}
+  var frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(function(p) {
+      ctx.save();
+      ctx.globalAlpha = p.opacity;
+      ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
+      ctx.rotate(p.angle * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+      p.y += p.speed;
+      p.x += p.drift;
+      p.angle += p.spin;
+      if (p.y > canvas.height) {
+        p.y = -20;
+        p.x = Math.random() * canvas.width;
+      }
+    });
+    frame++;
+    if (frame < 220) requestAnimationFrame(draw);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  draw();
+  window.addEventListener('resize', function() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  });
+})();
+</script>
 
-    {% if order.has_physical_items %}
-    <div class="delivery-note">
-      📦 <strong>Delivery Note:</strong> Your physical book(s) will be dispatched to <strong>{{ order.address }}, {{ order.city }}, {{ order.state }} - {{ order.pincode }}</strong> within 3-5 working days. You will receive a WhatsApp update.
-    </div>
-    {% endif %}
-
-    {% if order.has_digital_items %}
-    <div class="delivery-note" style="background:#eef9ff;border-color:#b8d9ff;color:#1a5276;">
-      💻 <strong>E-Library Access:</strong> Your purchased course(s) are now unlocked. Go to the course page and click <strong>"Access Course"</strong> to start reading.
-    </div>
-    {% endif %}
-
-    <div class="success-actions">
-      <a href="{% url 'home' %}" class="sa-btn sa-secondary">🏠 Back to Home</a>
-      <a href="{% url 'my_purchases' %}" class="sa-btn sa-primary">📦 My Purchases</a>
-    </div>
-  </div>
-</div>
 {% endblock %}
