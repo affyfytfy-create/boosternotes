@@ -435,6 +435,38 @@
       </div>
       {% endif %}
 
+      <!-- Delete All Backups (superuser only) -->
+      {% if user.is_superuser %}
+      <div class="backup-card" style="margin-top:24px;">
+        <div class="backup-card-header" style="background: linear-gradient(135deg, #7f1d1d, #b91c1c);">🗑️ Delete All Backup Files</div>
+        <div class="backup-card-body">
+          <div class="warn-box" style="background:#fef2f2;border-color:#f87171;color:#7f1d1d;">
+            ⚠️ <span><strong>Danger zone:</strong> permanently deletes every <code>.sqlite3</code> backup file on Dropbox (including <code>db_latest.sqlite3</code>). This only removes your restore points — <strong>your live site database is not touched</strong>. This cannot be undone.</span>
+          </div>
+          {% if backups %}
+          <form method="post" id="deleteAllBackupsForm"
+                onsubmit="return confirm('This will permanently delete all {{ backups|length }} backup file(s) from Dropbox. This cannot be undone. Continue?');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_all_backups">
+            <label style="font-size:.85rem;font-weight:600;color:#444;display:block;margin-bottom:6px;">
+              Type <strong>DELETE</strong> to confirm:
+            </label>
+            <input type="text" name="confirm_text" id="deleteAllConfirmInput" class="form-select-custom" autocomplete="off" placeholder="DELETE">
+            <button type="submit" class="btn-restore" id="deleteAllBackupsBtn" disabled
+                    style="background: linear-gradient(135deg, #7f1d1d, #b91c1c); opacity:.5; cursor:not-allowed;">
+              🗑️ Delete All {{ backups|length }} Backup File{{ backups|length|pluralize }}
+            </button>
+          </form>
+          {% else %}
+          <div class="empty-backup">
+            <div class="empty-icon">📭</div>
+            <p>No backup files to delete.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
     </main>
   </div>
 
@@ -477,6 +509,18 @@
         document.getElementById('page-loader').classList.remove('hide');
       });
     });
+
+    (function () {
+      var input = document.getElementById('deleteAllConfirmInput');
+      var btn = document.getElementById('deleteAllBackupsBtn');
+      if (!input || !btn) return;
+      input.addEventListener('input', function () {
+        var match = input.value.trim() === 'DELETE';
+        btn.disabled = !match;
+        btn.style.opacity = match ? '1' : '.5';
+        btn.style.cursor = match ? 'pointer' : 'not-allowed';
+      });
+    })();
   </script>
 </body>
 </html>

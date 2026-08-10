@@ -93,3 +93,32 @@ def list_backups():
         return sorted(files, reverse=True)
     except dropbox.exceptions.ApiError:
         return []
+
+
+def delete_all_backups():
+    """
+    Deletes every .sqlite3 file (including db_latest.sqlite3) from
+    BoosterNotes/Backups/ on Dropbox. Only touches the backup history —
+    the live db.sqlite3 on the server is never read or modified.
+
+    Returns the number of files deleted.
+    """
+    dbx = get_dropbox_client()
+    folder = f"/{DropboxPaths.BACKUPS}"
+    try:
+        result = dbx.files_list_folder(folder)
+    except dropbox.exceptions.ApiError:
+        return 0
+
+    entries = list(result.entries)
+    while result.has_more:
+        result = dbx.files_list_folder_continue(result.cursor)
+        entries.extend(result.entries)
+
+    deleted = 0
+    for entry in entries:
+        if isinstance(entry, dropbox.files.FileMetadata) and entry.name.endswith('.sqlite3'):
+            dbx.files_delete_v2(entry.path_lower)
+            deleted += 1
+
+    return deleted

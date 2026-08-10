@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
-from myapp.db_backup import backup_to_dropbox, restore_from_dropbox, list_backups
+from myapp.db_backup import backup_to_dropbox, restore_from_dropbox, list_backups, delete_all_backups
 
 
 @login_required
@@ -45,6 +45,18 @@ def backup_panel(request):
                     )
                 except Exception as e:
                     messages.error(request, f'Restore failed: {str(e)}')
+
+        elif action == 'delete_all_backups':
+            if not request.user.is_superuser:
+                messages.error(request, 'Only superusers can delete all backup files.')
+            elif request.POST.get('confirm_text', '').strip() != 'DELETE':
+                messages.error(request, 'Confirmation text did not match. No backups were deleted.')
+            else:
+                try:
+                    deleted = delete_all_backups()
+                    messages.success(request, f'Deleted {deleted} backup file(s) from Dropbox.')
+                except Exception as e:
+                    messages.error(request, f'Delete failed: {str(e)}')
 
         return redirect('backup_panel')
 
