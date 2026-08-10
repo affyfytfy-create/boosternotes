@@ -372,6 +372,17 @@ def hard_books_public(request):
     })
 
 
+# ── E-Library Public Dashboard ────────────────────────────────────────────────────────
+def elibrary_public(request):
+    courses = ELibraryModel.objects.filter(is_active=True).select_related('category').order_by('-created_at')
+    return render(request, 'elibrary_public.html', {
+        'courses': courses,
+        'navbar': _get_navbar(),
+        'footer': _get_footer(),
+        'cart_count': len(request.session.get('cart', {})),
+    })
+
+
 @login_required
 def hard_book_add(request):
     if request.method == 'POST':

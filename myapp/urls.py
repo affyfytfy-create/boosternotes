@@ -103,6 +103,9 @@ urlpatterns = [
     # Hard Books - public
     path('books/', views.hard_books_public, name='hard_books_public'),
 
+    # E-Library - public
+    path('pdf-courses/', views.elibrary_public, name='elibrary_public'),
+
     path('search/', views.search, name='search'),
     path('apply-coupon/', views.apply_coupon, name='apply_coupon'),
 
