@@ -202,9 +202,31 @@
       font-size: 0.9rem;
     }
     .empty-backup .empty-icon { font-size: 2.5rem; margin-bottom: 10px; }
+    /* ── Page-start / processing loader ──────────────────────────────── */
+    #page-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 999999;
+      background: #f4f6fb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity .25s ease, visibility .25s ease;
+    }
+    #page-loader.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+    #page-loader .spinner {
+      width: 56px; height: 56px;
+      border: 5px solid #e7ebf5;
+      border-top-color: #1a3a8f;
+      border-radius: 50%;
+      animation: bn-spin .8s linear infinite;
+    }
+    @keyframes bn-spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
+  <div id="page-loader"><div class="spinner"></div></div>
+
   {% include "msg.html" %}
 
   <!-- Nav -->
@@ -421,6 +443,28 @@
           !hamBtn.contains(event.target)) {
         sidebar.classList.remove('open');
       }
+    });
+
+    (function () {
+      var pageLoader = document.getElementById('page-loader');
+      function hidePageLoader() { pageLoader.classList.add('hide'); }
+      window.addEventListener('load', hidePageLoader);
+      setTimeout(hidePageLoader, 8000); // safety net so it can never get stuck
+    })();
+
+    // Backup/Restore both transfer the whole database to or from Dropbox —
+    // slow enough to deserve the same loading feedback as a file upload,
+    // even though neither form has a file input of its own. Restore forms
+    // already have an inline onsubmit="return confirm(...)" that runs before
+    // this listener (registered when the attribute was parsed, earlier than
+    // this script block) — if the admin clicks Cancel there, it calls
+    // preventDefault() on the same submit event, so checking defaultPrevented
+    // here correctly skips showing the loader for a submission that never happens.
+    document.querySelectorAll('form').forEach(function (form) {
+      form.addEventListener('submit', function (e) {
+        if (e.defaultPrevented) return;
+        document.getElementById('page-loader').classList.remove('hide');
+      });
     });
   </script>
 </body>

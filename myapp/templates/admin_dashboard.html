@@ -33,6 +33,20 @@
     }
     .back-btn .back-arrow { font-size: .9rem; }
 
+    /* ── Page-start Loader (shown while the page itself first loads) ──── */
+    #page-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 999999;
+      background: #f4f6fb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity .25s ease, visibility .25s ease;
+    }
+    #page-loader.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+    #page-loader .spinner { margin: 0; }
+
     /* ── Upload Loader Overlay ───────────────────────────────────────── */
     #upload-loader {
       display: none;
@@ -124,6 +138,8 @@
   </style>
 </head>  
 <body>
+
+  <div id="page-loader"><div class="spinner"></div></div>
 
   <div id="upload-loader">
     <div class="loader-box">
@@ -522,65 +538,79 @@
     });
 
     if (window.location.hash === '#payments') showSection('payments');
-
-    (function () {
-      const loader    = document.getElementById('upload-loader');
-      const bar       = document.getElementById('loader-bar');
-      const fileLabel = document.getElementById('loader-file-name');
-      const LABELS = {
-        banner:  { title: 'Uploading Banner…',   sub: 'Saving image, please wait' },
-        logo:    { title: 'Uploading Logo…',     sub: 'Saving logo & favicon' },
-        pdf:     { title: 'Uploading PDF…',      sub: 'This may take a moment for large files' },
-        image:   { title: 'Uploading Images…',   sub: 'Saving book images' },
-        default: { title: 'Uploading…',          sub: 'Please wait, do not close this page' },
-      };
-      function getLabel(form) {
-        const action = (form.action || window.location.href).toLowerCase();
-        if (action.includes('banner')) return LABELS.banner;
-        if (action.includes('navbar')) return LABELS.logo;
-        if (action.includes('pdf') || action.includes('elibrary')) return LABELS.pdf;
-        if (action.includes('book') || action.includes('hard')) return LABELS.image;
-        const fileInput = form.querySelector('input[type="file"]');
-        if (fileInput) {
-          const accept = (fileInput.accept || '').toLowerCase();
-          if (accept.includes('pdf')) return LABELS.pdf;
-          if (accept.includes('image')) return LABELS.image;
-        }
-        return LABELS.default;
-      }
-      function showLoader(form) {
-        const lbl = getLabel(form);
-        loader.querySelector('.loader-title').textContent = lbl.title;
-        loader.querySelector('.loader-sub').textContent   = lbl.sub;
-        const fileInput = form.querySelector('input[type="file"]');
-        if (fileInput && fileInput.files && fileInput.files.length) {
-          fileLabel.textContent = '📎 ' + Array.from(fileInput.files).map(f => f.name).join(', ');
-        } else { fileLabel.textContent = ''; }
-        bar.style.animation = 'none';
-        bar.offsetHeight;
-        bar.style.animation = 'progress 3s ease forwards';
-        loader.classList.add('active');
-      }
-      function attachLoaders() {
-        document.querySelectorAll('form').forEach(function (form) {
-          if (form.dataset.loaderAttached) return;
-          form.dataset.loaderAttached = '1';
-          const hasFile = form.querySelector('input[type="file"]');
-          if (!hasFile) return;
-          form.addEventListener('submit', function (e) {
-            const actionInput = form.querySelector('input[name="action"]');
-            if (actionInput && ['delete','toggle'].includes(actionInput.value)) return;
-            const fileInputs = form.querySelectorAll('input[type="file"]');
-            const hasSelectedFile = Array.from(fileInputs).some(fi => fi.files && fi.files.length > 0);
-            if (!hasSelectedFile) return;
-            showLoader(form);
-          });
-        });
-      }
-      document.addEventListener('DOMContentLoaded', attachLoaders);
-      new MutationObserver(attachLoaders).observe(document.body, { childList: true, subtree: true });
-    })();
   </script>
 {% endblock content1 %}
+
+<!-- Page-start + upload loaders live outside the content1 block on purpose:
+     every admin CRUD page (navbar, banner, categories, elibrary, hard books,
+     PWA settings, ...) fully overrides that block with its own page, which
+     used to silently discard this script along with it — the loader markup
+     was present everywhere but never actually did anything except on /dashboard/. -->
+<script>
+  (function () {
+    var pageLoader = document.getElementById('page-loader');
+    function hidePageLoader() { pageLoader.classList.add('hide'); }
+    window.addEventListener('load', hidePageLoader);
+    setTimeout(hidePageLoader, 8000); // safety net so it can never get stuck
+  })();
+
+  (function () {
+    const loader    = document.getElementById('upload-loader');
+    const bar       = document.getElementById('loader-bar');
+    const fileLabel = document.getElementById('loader-file-name');
+    const LABELS = {
+      banner:  { title: 'Uploading Banner…',   sub: 'Saving image, please wait' },
+      logo:    { title: 'Uploading Logo…',     sub: 'Saving logo & favicon' },
+      pdf:     { title: 'Uploading PDF…',      sub: 'This may take a moment for large files' },
+      image:   { title: 'Uploading Images…',   sub: 'Saving book images' },
+      default: { title: 'Uploading…',          sub: 'Please wait, do not close this page' },
+    };
+    function getLabel(form) {
+      const action = (form.action || window.location.href).toLowerCase();
+      if (action.includes('banner')) return LABELS.banner;
+      if (action.includes('navbar') || action.includes('pwa')) return LABELS.logo;
+      if (action.includes('pdf') || action.includes('elibrary')) return LABELS.pdf;
+      if (action.includes('book') || action.includes('hard') || action.includes('categor')) return LABELS.image;
+      const fileInput = form.querySelector('input[type="file"]');
+      if (fileInput) {
+        const accept = (fileInput.accept || '').toLowerCase();
+        if (accept.includes('pdf')) return LABELS.pdf;
+        if (accept.includes('image')) return LABELS.image;
+      }
+      return LABELS.default;
+    }
+    function showLoader(form) {
+      const lbl = getLabel(form);
+      loader.querySelector('.loader-title').textContent = lbl.title;
+      loader.querySelector('.loader-sub').textContent   = lbl.sub;
+      const fileInput = form.querySelector('input[type="file"]');
+      if (fileInput && fileInput.files && fileInput.files.length) {
+        fileLabel.textContent = '📎 ' + Array.from(fileInput.files).map(f => f.name).join(', ');
+      } else { fileLabel.textContent = ''; }
+      bar.style.animation = 'none';
+      bar.offsetHeight;
+      bar.style.animation = 'progress 3s ease forwards';
+      loader.classList.add('active');
+    }
+    function attachLoaders() {
+      document.querySelectorAll('form').forEach(function (form) {
+        if (form.dataset.loaderAttached) return;
+        form.dataset.loaderAttached = '1';
+        const hasFile = form.querySelector('input[type="file"]');
+        if (!hasFile) return;
+        form.addEventListener('submit', function (e) {
+          const actionInput = form.querySelector('input[name="action"]');
+          if (actionInput && ['delete','toggle'].includes(actionInput.value)) return;
+          const fileInputs = form.querySelectorAll('input[type="file"]');
+          const hasSelectedFile = Array.from(fileInputs).some(fi => fi.files && fi.files.length > 0);
+          if (!hasSelectedFile) return;
+          showLoader(form);
+        });
+      });
+    }
+    document.addEventListener('DOMContentLoaded', attachLoaders);
+    new MutationObserver(attachLoaders).observe(document.body, { childList: true, subtree: true });
+  })();
+</script>
 </body>
 </html>

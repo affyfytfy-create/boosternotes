@@ -57,6 +57,27 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
 
   <style>
+    /* ── Page-start loader (shown until the page has finished loading) ── */
+    #page-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 999999;
+      background: #f4f6fb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity .25s ease, visibility .25s ease;
+    }
+    #page-loader.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+    #page-loader .bn-spinner {
+      width: 56px; height: 56px;
+      border: 5px solid #dce4ff;
+      border-top-color: #1a3a8f;
+      border-radius: 50%;
+      animation: bn-spin .8s linear infinite;
+    }
+    @keyframes bn-spin { to { transform: rotate(360deg); } }
+
     /* ── Mobile profile avatar button ── */
     .mob-profile-wrap { display:none; position:relative; }
     .mob-avatar-btn {
@@ -847,6 +868,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   </style>
 </head>
 <body>
+  <div id="page-loader"><div class="bn-spinner"></div></div>
+
   <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-54HHQ5TZ"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -1694,6 +1717,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     window.addEventListener('resize',window.updateBannerMode);
     window.addEventListener('load',window.updateBannerMode);
+  })();
+</script>
+
+<script>
+  (function () {
+    var pageLoader = document.getElementById('page-loader');
+    function hidePageLoader() { pageLoader.classList.add('hide'); }
+    window.addEventListener('load', hidePageLoader);
+    setTimeout(hidePageLoader, 8000); // safety net so it can never get stuck
   })();
 </script>
 </body>
