@@ -1,0 +1,4 @@
+# SQLite WAL-mode auxiliary files — regenerated automatically whenever the
+# app opens db.sqlite3, never meaningful to commit.
+db.sqlite3-wal
+db.sqlite3-shm

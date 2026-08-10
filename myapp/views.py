@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -52,25 +53,49 @@ def _get_about():
     return about
 
 
+def _warm_dropbox_cache(objs, property_name):
+    """
+    Call `property_name` on each object in parallel threads instead of
+    sequentially. Each cold/expired Dropbox-backed cache entry costs a live
+    API round trip (~1-2s) — for a page rendering 8 thumbnails serially,
+    that's up to 10+ seconds if several happen to be cold at once. Since
+    each object's Dropbox client/request is independent, fetching them
+    concurrently bounds the wait by the slowest single call instead of
+    the sum of all of them.
+    """
+    objs = list(objs)
+    if not objs:
+        return {}
+    results = {}
+
+    def _touch(o):
+        try:
+            results[o.pk] = getattr(o, property_name)
+        except Exception:
+            results[o.pk] = None
+
+    with ThreadPoolExecutor(max_workers=min(10, len(objs))) as ex:
+        list(ex.map(_touch, objs))
+    return results
+
+
 def _attach_preview_urls(books_qs):
     """Attach .preview_url to every HardBookImage in the queryset.
     Works whether images were fetched via prefetch_related or .all().
     Returns the same queryset/list (mutated in-place).
+
+    Delegates to HardBookImage.image_url, which is backed by the
+    dropbox_image_url_cached/_expires DB fields — this used to call
+    DropboxManager.get_temporary_link() directly and uncached, meaning
+    every page listing HardBook images (home, search, hard_books_public,
+    hard_books_list, hard_book_detail, cart) paid a live Dropbox API round
+    trip per image on every single request. Now also warmed in parallel
+    so N cold entries don't serialize into an N x ~1.5s wait.
     """
-    for book in books_qs:
-        for img in book.images.all():
-            if img.dropbox_path:
-                try:
-                    img.preview_url = DropboxManager.get_temporary_link(img.dropbox_path)
-                except Exception:
-                    img.preview_url = None
-            elif img.image:
-                try:
-                    img.preview_url = img.image.url
-                except Exception:
-                    img.preview_url = None
-            else:
-                img.preview_url = None
+    images = [img for book in books_qs for img in book.images.all()]
+    results = _warm_dropbox_cache(images, 'image_url')
+    for img in images:
+        img.preview_url = results.get(img.pk)
     return books_qs
 
 
@@ -1073,7 +1098,17 @@ def home(request):
         .order_by('name')
     )
 
-    popular_pdfs = ELibraryModel.objects.filter(is_active=True).select_related('category').order_by('-created_at')[:8]
+    def _popular_pdfs_query():
+        return ELibraryModel.objects.filter(is_active=True).select_related('category').order_by('-created_at')[:8]
+
+    popular_pdfs = list(_popular_pdfs_query())
+    _warm_dropbox_cache(popular_pdfs, 'thumbnail_url')
+    # Re-fetch: the property's cache-write updates the DB row via .update(),
+    # which doesn't touch these in-memory instances, so a second property
+    # access here would otherwise still see stale fields and re-fetch from
+    # Dropbox one at a time in the template — undoing the parallel warm-up.
+    if popular_pdfs:
+        popular_pdfs = list(_popular_pdfs_query())
 
     hard_books = list(
         HardBook.objects.filter(is_active=True).prefetch_related(

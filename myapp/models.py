@@ -52,35 +52,10 @@ class HardBookImage(models.Model):
         Priority: valid cached Dropbox URL > refresh from Dropbox (then cache) > stale cache > local file.
         Dropbox temporary links last ~4 hours; we refresh when <30 min remain.
         """
-        # 1. Return cached URL if still fresh (more than 30 min remaining)
-        if self.dropbox_image_url_cached and self.dropbox_image_url_expires:
-            if self.dropbox_image_url_expires > timezone.now() + timedelta(minutes=30):
-                return self.dropbox_image_url_cached
-
-        # 2. Refresh from Dropbox
-        if self.dropbox_path:
-            try:
-                from .dropbox_utils import DropboxManager
-                link = DropboxManager.get_temporary_link(self.dropbox_path)
-                if link:
-                    HardBookImage.objects.filter(pk=self.pk).update(
-                        dropbox_image_url_cached=link,
-                        dropbox_image_url_expires=timezone.now() + timedelta(hours=4),
-                    )
-                    return link
-            except Exception:
-                pass
-            # 3. Dropbox unreachable — serve stale cache rather than broken image
-            if self.dropbox_image_url_cached:
-                return self.dropbox_image_url_cached
-
-        # 4. Final fallback: local file
-        if self.image:
-            try:
-                return self.image.url
-            except Exception:
-                pass
-        return None
+        from .dropbox_utils import resolve_cached_dropbox_url
+        return resolve_cached_dropbox_url(
+            self, 'dropbox_path', 'dropbox_image_url_cached', 'dropbox_image_url_expires', 'image',
+        )
 
 
 class SiteSetting(models.Model):
@@ -124,61 +99,17 @@ class NavbarSetting(models.Model):
 
     @property
     def logo_url(self):
-        """Same cache/refresh/fallback pattern as ELibraryModel.thumbnail_url."""
-        if self.logo_dropbox_url_cached and self.logo_dropbox_url_expires:
-            if self.logo_dropbox_url_expires > timezone.now() + timedelta(minutes=30):
-                return self.logo_dropbox_url_cached
-
-        if self.logo_dropbox_path:
-            try:
-                from .dropbox_utils import DropboxManager
-                link = DropboxManager.get_temporary_link(self.logo_dropbox_path)
-                if link:
-                    NavbarSetting.objects.filter(pk=self.pk).update(
-                        logo_dropbox_url_cached=link,
-                        logo_dropbox_url_expires=timezone.now() + timedelta(hours=4),
-                    )
-                    return link
-            except Exception:
-                pass
-            if self.logo_dropbox_url_cached:
-                return self.logo_dropbox_url_cached
-
-        if self.logo:
-            try:
-                return self.logo.url
-            except Exception:
-                pass
-        return None
+        from .dropbox_utils import resolve_cached_dropbox_url
+        return resolve_cached_dropbox_url(
+            self, 'logo_dropbox_path', 'logo_dropbox_url_cached', 'logo_dropbox_url_expires', 'logo',
+        )
 
     @property
     def favicon_url(self):
-        """Same cache/refresh/fallback pattern as ELibraryModel.thumbnail_url."""
-        if self.favicon_dropbox_url_cached and self.favicon_dropbox_url_expires:
-            if self.favicon_dropbox_url_expires > timezone.now() + timedelta(minutes=30):
-                return self.favicon_dropbox_url_cached
-
-        if self.favicon_dropbox_path:
-            try:
-                from .dropbox_utils import DropboxManager
-                link = DropboxManager.get_temporary_link(self.favicon_dropbox_path)
-                if link:
-                    NavbarSetting.objects.filter(pk=self.pk).update(
-                        favicon_dropbox_url_cached=link,
-                        favicon_dropbox_url_expires=timezone.now() + timedelta(hours=4),
-                    )
-                    return link
-            except Exception:
-                pass
-            if self.favicon_dropbox_url_cached:
-                return self.favicon_dropbox_url_cached
-
-        if self.favicon:
-            try:
-                return self.favicon.url
-            except Exception:
-                pass
-        return None
+        from .dropbox_utils import resolve_cached_dropbox_url
+        return resolve_cached_dropbox_url(
+            self, 'favicon_dropbox_path', 'favicon_dropbox_url_cached', 'favicon_dropbox_url_expires', 'favicon',
+        )
 
 
 class PWASettings(models.Model):
@@ -198,32 +129,10 @@ class PWASettings(models.Model):
 
     @property
     def icon_url(self):
-        """Same cache/refresh/fallback pattern as ELibraryModel.thumbnail_url."""
-        if self.icon_dropbox_url_cached and self.icon_dropbox_url_expires:
-            if self.icon_dropbox_url_expires > timezone.now() + timedelta(minutes=30):
-                return self.icon_dropbox_url_cached
-
-        if self.icon_dropbox_path:
-            try:
-                from .dropbox_utils import DropboxManager
-                link = DropboxManager.get_temporary_link(self.icon_dropbox_path)
-                if link:
-                    PWASettings.objects.filter(pk=self.pk).update(
-                        icon_dropbox_url_cached=link,
-                        icon_dropbox_url_expires=timezone.now() + timedelta(hours=4),
-                    )
-                    return link
-            except Exception:
-                pass
-            if self.icon_dropbox_url_cached:
-                return self.icon_dropbox_url_cached
-
-        if self.icon:
-            try:
-                return self.icon.url
-            except Exception:
-                pass
-        return None
+        from .dropbox_utils import resolve_cached_dropbox_url
+        return resolve_cached_dropbox_url(
+            self, 'icon_dropbox_path', 'icon_dropbox_url_cached', 'icon_dropbox_url_expires', 'icon',
+        )
 
 
 class BannerSetting(models.Model):
@@ -247,32 +156,10 @@ class BannerSetting(models.Model):
 
     @property
     def display_url(self):
-        """Same cache/refresh/fallback pattern as ELibraryModel.thumbnail_url."""
-        if self.dropbox_url_cached and self.dropbox_url_expires:
-            if self.dropbox_url_expires > timezone.now() + timedelta(minutes=30):
-                return self.dropbox_url_cached
-
-        if self.dropbox_path:
-            try:
-                from .dropbox_utils import DropboxManager
-                link = DropboxManager.get_temporary_link(self.dropbox_path)
-                if link:
-                    BannerSetting.objects.filter(pk=self.pk).update(
-                        dropbox_url_cached=link,
-                        dropbox_url_expires=timezone.now() + timedelta(hours=4),
-                    )
-                    return link
-            except Exception:
-                pass
-            if self.dropbox_url_cached:
-                return self.dropbox_url_cached
-
-        if self.image:
-            try:
-                return self.image.url
-            except Exception:
-                pass
-        return None
+        from .dropbox_utils import resolve_cached_dropbox_url
+        return resolve_cached_dropbox_url(
+            self, 'dropbox_path', 'dropbox_url_cached', 'dropbox_url_expires', 'image',
+        )
 
 
 class StatsSetting(models.Model):
@@ -374,29 +261,10 @@ class Category(models.Model):
 
     @property
     def image_url(self):
-        """Same cache/refresh/fallback pattern as ELibraryModel.thumbnail_url."""
-        if self.dropbox_url_cached and self.dropbox_url_expires:
-            if self.dropbox_url_expires > timezone.now() + timedelta(minutes=30):
-                return self.dropbox_url_cached
-
-        if self.dropbox_path:
-            try:
-                from .dropbox_utils import DropboxManager
-                link = DropboxManager.get_temporary_link(self.dropbox_path)
-                if link:
-                    Category.objects.filter(pk=self.pk).update(
-                        dropbox_url_cached=link,
-                        dropbox_url_expires=timezone.now() + timedelta(hours=4),
-                    )
-                    return link
-            except Exception:
-                pass
-            if self.dropbox_url_cached:
-                return self.dropbox_url_cached
-
-        if self.image and hasattr(self.image, 'url'):
-            return self.image.url
-        return None
+        from .dropbox_utils import resolve_cached_dropbox_url
+        return resolve_cached_dropbox_url(
+            self, 'dropbox_path', 'dropbox_url_cached', 'dropbox_url_expires', 'image',
+        )
 
 
 class Notification(models.Model):
@@ -501,35 +369,10 @@ class ELibraryModel(models.Model):
           4. Local thumbnail.url
           5. None
         """
-        # 1. Serve from cache if still fresh
-        if self.dropbox_thumbnail_url_cached and self.dropbox_thumbnail_url_expires:
-            if self.dropbox_thumbnail_url_expires > timezone.now() + timedelta(minutes=30):
-                return self.dropbox_thumbnail_url_cached
-
-        # 2. Refresh from Dropbox
-        if self.dropbox_thumbnail_path:
-            try:
-                from .dropbox_utils import DropboxManager
-                link = DropboxManager.get_temporary_link(self.dropbox_thumbnail_path)
-                if link:
-                    ELibraryModel.objects.filter(pk=self.pk).update(
-                        dropbox_thumbnail_url_cached=link,
-                        dropbox_thumbnail_url_expires=timezone.now() + timedelta(hours=4),
-                    )
-                    return link
-            except Exception:
-                pass
-            # 3. Dropbox unreachable — serve stale cache rather than broken image
-            if self.dropbox_thumbnail_url_cached:
-                return self.dropbox_thumbnail_url_cached
-
-        # 4. Fallback to local file
-        if self.thumbnail:
-            try:
-                return self.thumbnail.url
-            except Exception:
-                pass
-        return None
+        from .dropbox_utils import resolve_cached_dropbox_url
+        return resolve_cached_dropbox_url(
+            self, 'dropbox_thumbnail_path', 'dropbox_thumbnail_url_cached', 'dropbox_thumbnail_url_expires', 'thumbnail',
+        )
 
 
 class ELibraryPDF(models.Model):

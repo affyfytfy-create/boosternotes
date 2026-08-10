@@ -3,6 +3,8 @@ import re
 import time
 import dropbox
 from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
 from dropbox import Dropbox, exceptions
 from dropbox.exceptions import ApiError
 
@@ -294,3 +296,56 @@ class DropboxManager:
             return {"success": True, "message": "File deleted successfully"}
         except Exception as e:
             return {"success": False, "error": str(e)}
+
+
+# ── Shared cached-URL resolver ──────────────────────────────────────────────────
+# Every Dropbox-backed *_url property in models.py (ELibraryModel.thumbnail_url,
+# HardBookImage.image_url, NavbarSetting.logo_url/favicon_url,
+# BannerSetting.display_url, Category.image_url, PWASettings.icon_url) used to
+# hand-roll this exact cache/refresh/fallback logic. That duplication let a
+# real bug ship: when a dropbox_path pointed at a file that no longer exists on
+# Dropbox, get_temporary_link() keeps returning None forever, and with no
+# negative-caching every single page render that touched the object paid a
+# live failed API round trip (0.3-1.5s) — every request, forever.
+def resolve_cached_dropbox_url(instance, path_field, cached_field, expires_field, local_field=None):
+    now = timezone.now()
+    cached  = getattr(instance, cached_field)
+    expires = getattr(instance, expires_field)
+
+    # 1. Fresh cached link (>30 min remaining) — no API call.
+    if cached and expires and expires > now + timedelta(minutes=30):
+        return cached
+
+    # 2. Within a cooldown from a recent failed/negative lookup — skip
+    #    retrying a dead path on every request; fall through to whatever
+    #    fallback is available instead.
+    in_cooldown = expires and not cached and expires > now
+
+    path  = getattr(instance, path_field)
+    model = type(instance)
+    if path and not in_cooldown:
+        link = DropboxManager.get_temporary_link(path)
+        if link:
+            model.objects.filter(pk=instance.pk).update(**{
+                cached_field:  link,
+                expires_field: now + timedelta(hours=4),
+            })
+            return link
+        else:
+            model.objects.filter(pk=instance.pk).update(**{
+                expires_field: now + timedelta(minutes=30),
+            })
+
+    # 3. Stale cache is still better than nothing.
+    if cached:
+        return cached
+
+    # 4. Local file fallback.
+    if local_field:
+        local = getattr(instance, local_field, None)
+        if local:
+            try:
+                return local.url
+            except Exception:
+                pass
+    return None

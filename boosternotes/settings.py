@@ -9,7 +9,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-g)(h61zja22%r+hx-l=x2jia$agp8_a+)+_p7nx7sb!r)b(f15'
 
-DEBUG = True
+# DEBUG defaults to off (Railway has no DEBUG env var, so production gets
+# False automatically). DEBUG=True disables template caching and makes
+# every SQL query keep a full traceback in memory for the life of the
+# request — real, measurable overhead on every page. Export DEBUG=true
+# locally if you want Django's debug error pages while developing.
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = ['*']
 
@@ -40,7 +45,10 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [],
-        'APP_DIRS': True,
+        # APP_DIRS and 'loaders' are mutually exclusive — the cached loader
+        # (which avoids re-reading + re-parsing every .html file from disk
+        # on every render) has to be wired in manually via 'loaders' instead.
+        'APP_DIRS': DEBUG,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.request',
@@ -48,6 +56,14 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'myapp.context_processors.global_settings',
             ],
+            **({} if DEBUG else {
+                'loaders': [
+                    ('django.template.loaders.cached.Loader', [
+                        'django.template.loaders.filesystem.Loader',
+                        'django.template.loaders.app_directories.Loader',
+                    ]),
+                ],
+            }),
         },
     },
 ]
@@ -58,6 +74,16 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            # WAL lets readers and a writer proceed concurrently instead of
+            # the default rollback-journal mode where any writer blocks every
+            # reader; timeout makes a second writer wait for the lock instead
+            # of immediately raising "database is locked" (which, silently
+            # caught by callers, was quietly failing background cache writes
+            # — e.g. two Dropbox-link cache updates landing at the same time).
+            'timeout': 20,
+            'init_command': 'PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;',
+        },
     }
 }
 
