@@ -401,10 +401,11 @@
     }
 
     .mob-link{
-      display:flex;align-items:center;justify-content:flex-start;gap:10px;
-      padding:14px 16px;color:#333;text-align:left;width:100%;
+      display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:10px;
+      padding:14px 16px;color:#333;text-align:left!important;width:100%;
       font-size:0.92rem;font-weight:500;
       border-bottom:1px solid #f5f7fa;cursor:pointer;
+      margin:0;box-sizing:border-box;
     }
     .mob-link:last-child{border-bottom:none}
     .mob-link .icon{font-size:16px;width:22px;text-align:center}
