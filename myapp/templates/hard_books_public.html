@@ -3,7 +3,15 @@
 
 {% block content %}
 <style>
-  .books-section {
+  /* All classes below are prefixed .bp- (Books Public) so they can never
+     collide with index.html's own .book-* classes (the homepage's Physical
+     Books slider) — this page extends index.html, so that global <style>
+     block is always loaded too, and same-named classes with different
+     rules were merging unpredictably (e.g. .book-card here picking up
+     index.html's position:relative + ::before spine accent, .book-buy-btn
+     here picking up index.html's margin-top/min-height), which is what was
+     causing the layout to fall apart. */
+  .bp-section {
     padding: 2rem 1.5rem;
     max-width: 1400px;
     margin: 0 auto;
@@ -26,7 +34,7 @@
   }
   .back-to-home:hover { background: #e9edf5; transform: translateY(-2px); text-decoration: none; color: #333; }
 
-  .books-header {
+  .bp-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -36,7 +44,7 @@
     padding-bottom: 1rem;
     border-bottom: 2px solid #e7ebf5;
   }
-  .books-header h2 {
+  .bp-header h2 {
     font-size: 1.5rem;
     font-weight: 700;
     color: #1a1a2e;
@@ -45,7 +53,7 @@
     align-items: center;
     gap: 10px;
   }
-  .books-count-badge {
+  .bp-count-badge {
     background: linear-gradient(135deg, #1a3a8f, #0d2060);
     color: #fff;
     padding: 6px 14px;
@@ -55,14 +63,14 @@
   }
 
   /* Filter bar */
-  .books-filter {
+  .bp-filter {
     margin-bottom: 1.5rem;
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
     align-items: center;
   }
-  .books-filter input {
+  .bp-filter input {
     flex: 1;
     min-width: 200px;
     padding: 9px 14px;
@@ -72,17 +80,17 @@
     outline: none;
     transition: border 0.2s;
   }
-  .books-filter input:focus { border-color: #1a3a8f; }
+  .bp-filter input:focus { border-color: #1a3a8f; }
 
   /* Grid */
-  .books-grid {
+  .bp-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 1.25rem;
   }
 
   /* Book card */
-  .book-card {
+  .bp-card {
     background: #fff;
     border: 1px solid #e7ebf5;
     border-radius: 14px;
@@ -94,13 +102,13 @@
     text-decoration: none;
     color: inherit;
   }
-  .book-card:hover {
+  .bp-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 24px rgba(26,58,143,0.12);
     text-decoration: none;
     color: inherit;
   }
-  .book-card-img {
+  .bp-card-img {
     width: 100%;
     aspect-ratio: 3/4;
     object-fit: cover;
@@ -110,15 +118,15 @@
     justify-content: center;
     font-size: 3.5rem;
   }
-  .book-card-img img { width: 100%; height: 100%; object-fit: cover; }
-  .book-card-body {
+  .bp-card-img img { width: 100%; height: 100%; object-fit: cover; }
+  .bp-card-body {
     padding: 12px 14px;
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 6px;
   }
-  .book-card-title {
+  .bp-card-title {
     font-size: 0.88rem;
     font-weight: 700;
     color: #1a1a2e;
@@ -128,20 +136,20 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  .book-card-author {
+  .bp-card-author {
     font-size: 0.75rem;
     color: #777;
   }
-  .book-card-price-row {
+  .bp-card-price-row {
     display: flex;
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
     margin-top: auto;
   }
-  .book-price-now { font-size: 1rem; font-weight: 800; color: #1a3a8f; }
-  .book-price-old { font-size: 0.78rem; color: #bbb; text-decoration: line-through; }
-  .book-save-badge {
+  .bp-price-now { font-size: 1rem; font-weight: 800; color: #1a3a8f; }
+  .bp-price-old { font-size: 0.78rem; color: #bbb; text-decoration: line-through; }
+  .bp-save-badge {
     background: #fff3cd;
     color: #856404;
     font-size: 0.65rem;
@@ -150,13 +158,13 @@
     border-radius: 999px;
   }
 
-  .book-card-footer {
+  .bp-card-footer {
     padding: 10px 14px;
     border-top: 1px solid #f0f2f8;
     display: flex;
     gap: 8px;
   }
-  .book-buy-btn {
+  .bp-buy-btn {
     flex: 1;
     padding: 8px 12px;
     background: linear-gradient(135deg, #1a3a8f, #0d2060);
@@ -169,9 +177,10 @@
     transition: all 0.2s ease;
     font-family: inherit;
     text-align: center;
+    width: 100%;
   }
-  .book-buy-btn:hover { opacity: 0.88; transform: translateY(-1px); }
-  .book-cart-btn {
+  .bp-buy-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .bp-cart-btn {
     padding: 8px 12px;
     background: #fff;
     color: #1a3a8f;
@@ -183,15 +192,15 @@
     transition: all 0.2s ease;
     font-family: inherit;
   }
-  .book-cart-btn:hover { background: #1a3a8f; color: #fff; }
+  .bp-cart-btn:hover { background: #1a3a8f; color: #fff; }
 
   /* Empty state */
-  .books-empty {
+  .bp-empty {
     text-align: center;
     padding: 4rem 2rem;
     color: #888;
   }
-  .books-empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+  .bp-empty-icon { font-size: 3rem; margin-bottom: 1rem; }
 
   /* No results (JS filter) */
   .no-filter-result {
@@ -203,17 +212,17 @@
   }
 
   @media (max-width: 640px) {
-    .books-section { padding: 1rem; }
-    .books-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
-    .book-card-body { padding: 8px 10px; }
-    .book-card-footer { padding: 8px 10px; flex-direction: column; }
+    .bp-section { padding: 1rem; }
+    .bp-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    .bp-card-body { padding: 8px 10px; }
+    .bp-card-footer { padding: 8px 10px; flex-direction: column; }
   }
   @media (max-width: 360px) {
-    .books-grid { grid-template-columns: 1fr; }
+    .bp-grid { grid-template-columns: 1fr; }
   }
 </style>
 
-<div class="books-section">
+<div class="bp-section">
 
   <!-- Back -->
   <a href="{% url 'home' %}" class="back-to-home">
@@ -221,60 +230,60 @@
   </a>
 
   <!-- Header -->
-  <div class="books-header">
+  <div class="bp-header">
     <h2>
       <i class="fa-solid fa-book" style="color:#1a3a8f;"></i>
-      Physical Books
+      Recommended Reads
     </h2>
-    <span class="books-count-badge">{{ books|length }} Book{{ books|length|pluralize }}</span>
+    <span class="bp-count-badge">{{ books|length }} Book{{ books|length|pluralize }}</span>
   </div>
 
   {% if books %}
     <!-- Search/Filter -->
-    <div class="books-filter">
+    <div class="bp-filter">
       <input type="text" id="bookSearch" placeholder="🔍 Search books by title or author..." oninput="filterBooks()">
     </div>
 
     <!-- Grid -->
-    <div class="books-grid" id="booksGrid">
+    <div class="bp-grid" id="booksGrid">
       {% for book in books %}
         {% with first_img=book.images.all.0 %}
-        <div class="book-card-wrapper" data-title="{{ book.title|lower }}" data-author="{{ book.author|lower|default:'' }}">
-          <a href="{% url 'hard_book_detail' book.pk %}" class="book-card">
-            <div class="book-card-img">
+        <div class="bp-card-wrapper" data-title="{{ book.title|lower }}" data-author="{{ book.author|lower|default:'' }}">
+          <a href="{% url 'hard_book_detail' book.pk %}" class="bp-card">
+            <div class="bp-card-img">
               {% if first_img and first_img.preview_url %}
-                <img src="{{ first_img.preview_url }}" alt="{{ book.title }}" loading="lazy">
+                <img src="{{ first_img.preview_url }}" alt="{{ book.title }}" loading="lazy" decoding="async">
               {% else %}
                 📗
               {% endif %}
             </div>
-            <div class="book-card-body">
-              <div class="book-card-title">{{ book.title }}</div>
+            <div class="bp-card-body">
+              <div class="bp-card-title">{{ book.title }}</div>
               {% if book.author %}
-                <div class="book-card-author">by {{ book.author }}</div>
+                <div class="bp-card-author">by {{ book.author }}</div>
               {% endif %}
-              <div class="book-card-price-row">
-                <span class="book-price-now">₹{{ book.price|floatformat:0 }}</span>
+              <div class="bp-card-price-row">
+                <span class="bp-price-now">₹{{ book.price|floatformat:0 }}</span>
                 {% if book.original_price and book.original_price > book.price %}
-                  <span class="book-price-old">₹{{ book.original_price|floatformat:0 }}</span>
-                  <span class="book-save-badge">Save ₹{{ book.original_price|add:"-0"|floatformat:0 }}</span>
+                  <span class="bp-price-old">₹{{ book.original_price|floatformat:0 }}</span>
+                  <span class="bp-save-badge">Save ₹{{ book.original_price|add:"-0"|floatformat:0 }}</span>
                 {% endif %}
               </div>
             </div>
           </a>
-          <div class="book-card-footer">
+          <div class="bp-card-footer">
             <form method="post" action="{% url 'add_to_cart' %}" style="flex:1;display:flex;">
               {% csrf_token %}
               <input type="hidden" name="item_id" value="{{ book.id }}">
               <input type="hidden" name="item_type" value="book">
               <input type="hidden" name="redirect_to" value="checkout">
-              <button type="submit" class="book-buy-btn" style="width:100%;">⚡ Buy Now</button>
+              <button type="submit" class="bp-buy-btn">⚡ Buy Now</button>
             </form>
             <form method="post" action="{% url 'add_to_cart' %}">
               {% csrf_token %}
               <input type="hidden" name="item_id" value="{{ book.id }}">
               <input type="hidden" name="item_type" value="book">
-              <button type="submit" class="book-cart-btn">🛒</button>
+              <button type="submit" class="bp-cart-btn">🛒</button>
             </form>
           </div>
         </div>
@@ -284,8 +293,8 @@
     <div class="no-filter-result" id="noResult">😔 No books match your search.</div>
 
   {% else %}
-    <div class="books-empty">
-      <div class="books-empty-icon">📚</div>
+    <div class="bp-empty">
+      <div class="bp-empty-icon">📚</div>
       <div style="font-size:1.1rem;font-weight:700;color:#1a1a2e;margin-bottom:8px;">No Books Available Yet</div>
       <div>Check back soon — new physical books are added regularly.</div>
     </div>
@@ -296,7 +305,7 @@
 <script>
 function filterBooks() {
   const q = document.getElementById('bookSearch').value.toLowerCase().trim();
-  const wrappers = document.querySelectorAll('.book-card-wrapper');
+  const wrappers = document.querySelectorAll('.bp-card-wrapper');
   let visible = 0;
   wrappers.forEach(w => {
     const match = !q || w.dataset.title.includes(q) || w.dataset.author.includes(q);
