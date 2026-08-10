@@ -3,7 +3,14 @@
 
 {% block content %}
 <style>
-  .pdf-section {
+  /* All classes below are prefixed .epub- so they can never collide with
+     myapp/static/css/style.css's own .pdf-section/.pdf-grid/.pdf-card rules
+     (loaded globally via <link> on every page) nor with index.html's inline
+     styles. A previous version of this page reused the .pdf- prefix, which
+     collided with style.css's site-wide .pdf-card { height:100%; ... } /
+     .pdf-grid { align-items:stretch; ... } rules and broke the card grid
+     layout on both desktop and mobile. */
+  .epub-section {
     padding: 2rem 1.5rem;
     max-width: 1400px;
     margin: 0 auto;
@@ -26,7 +33,7 @@
   }
   .back-to-home:hover { background: #e9edf5; transform: translateY(-2px); text-decoration: none; color: #333; }
 
-  .pdf-section-header {
+  .epub-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -36,7 +43,7 @@
     padding-bottom: 1rem;
     border-bottom: 2px solid #e7ebf5;
   }
-  .pdf-section-header h2 {
+  .epub-header h2 {
     font-size: 1.5rem;
     font-weight: 700;
     color: #1a1a2e;
@@ -45,7 +52,7 @@
     align-items: center;
     gap: 10px;
   }
-  .pdf-count-badge {
+  .epub-count-badge {
     background: linear-gradient(135deg, #1a3a8f, #0d2060);
     color: #fff;
     padding: 6px 14px;
@@ -55,14 +62,14 @@
   }
 
   /* Filter bar */
-  .pdf-filter {
+  .epub-filter {
     margin-bottom: 1.5rem;
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
     align-items: center;
   }
-  .pdf-filter input {
+  .epub-filter input {
     flex: 1;
     min-width: 200px;
     padding: 9px 14px;
@@ -72,17 +79,17 @@
     outline: none;
     transition: border 0.2s;
   }
-  .pdf-filter input:focus { border-color: #1a3a8f; }
+  .epub-filter input:focus { border-color: #1a3a8f; }
 
   /* Grid */
-  .pdf-grid {
+  .epub-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 1.25rem;
   }
 
   /* Card */
-  .pdf-card {
+  .epub-card {
     background: #fff;
     border: 1px solid #e7ebf5;
     border-radius: 14px;
@@ -94,13 +101,13 @@
     text-decoration: none;
     color: inherit;
   }
-  .pdf-card:hover {
+  .epub-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 24px rgba(26,58,143,0.12);
     text-decoration: none;
     color: inherit;
   }
-  .pdf-card-img {
+  .epub-card-img {
     width: 100%;
     aspect-ratio: 4/3;
     object-fit: cover;
@@ -110,15 +117,15 @@
     justify-content: center;
     font-size: 3rem;
   }
-  .pdf-card-img img { width: 100%; height: 100%; object-fit: cover; }
-  .pdf-card-body {
+  .epub-card-img img { width: 100%; height: 100%; object-fit: cover; }
+  .epub-card-body {
     padding: 12px 14px;
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 6px;
   }
-  .pdf-card-title {
+  .epub-card-title {
     font-size: 0.88rem;
     font-weight: 700;
     color: #1a1a2e;
@@ -128,28 +135,28 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  .pdf-card-category {
+  .epub-card-category {
     font-size: 0.72rem;
     color: #1a3a8f;
     font-weight: 600;
   }
-  .pdf-card-price-row {
+  .epub-card-price-row {
     display: flex;
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
     margin-top: auto;
   }
-  .pdf-price-now { font-size: 1rem; font-weight: 800; color: #1a3a8f; }
-  .pdf-price-old { font-size: 0.78rem; color: #bbb; text-decoration: line-through; }
+  .epub-price-now { font-size: 1rem; font-weight: 800; color: #1a3a8f; }
+  .epub-price-old { font-size: 0.78rem; color: #bbb; text-decoration: line-through; }
 
-  .pdf-card-footer {
+  .epub-card-footer {
     padding: 10px 14px;
     border-top: 1px solid #f0f2f8;
     display: flex;
     gap: 8px;
   }
-  .pdf-buy-btn {
+  .epub-buy-btn {
     flex: 1;
     padding: 8px 12px;
     background: linear-gradient(135deg, #1a3a8f, #0d2060);
@@ -164,8 +171,8 @@
     text-align: center;
     width: 100%;
   }
-  .pdf-buy-btn:hover { opacity: 0.88; transform: translateY(-1px); }
-  .pdf-cart-btn {
+  .epub-buy-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .epub-cart-btn {
     padding: 8px 12px;
     background: #fff;
     color: #1a3a8f;
@@ -178,15 +185,15 @@
     font-family: inherit;
     width: 100%;
   }
-  .pdf-cart-btn:hover { background: #1a3a8f; color: #fff; }
+  .epub-cart-btn:hover { background: #1a3a8f; color: #fff; }
 
   /* Empty state */
-  .pdf-empty {
+  .epub-empty {
     text-align: center;
     padding: 4rem 2rem;
     color: #888;
   }
-  .pdf-empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+  .epub-empty-icon { font-size: 3rem; margin-bottom: 1rem; }
 
   /* No results (JS filter) */
   .no-filter-result {
@@ -198,17 +205,17 @@
   }
 
   @media (max-width: 640px) {
-    .pdf-section { padding: 1rem; }
-    .pdf-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
-    .pdf-card-body { padding: 8px 10px; }
-    .pdf-card-footer { padding: 8px 10px; flex-direction: column; }
+    .epub-section { padding: 1rem; }
+    .epub-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    .epub-card-body { padding: 8px 10px; }
+    .epub-card-footer { padding: 8px 10px; flex-direction: column; }
   }
   @media (max-width: 360px) {
-    .pdf-grid { grid-template-columns: 1fr; }
+    .epub-grid { grid-template-columns: 1fr; }
   }
 </style>
 
-<div class="pdf-section">
+<div class="epub-section">
 
   <!-- Back -->
   <a href="{% url 'home' %}" class="back-to-home">
@@ -216,58 +223,58 @@
   </a>
 
   <!-- Header -->
-  <div class="pdf-section-header">
+  <div class="epub-header">
     <h2>
       <i class="fa-solid fa-file-pdf" style="color:#1a3a8f;"></i>
       PDF Courses
     </h2>
-    <span class="pdf-count-badge">{{ courses|length }} Course{{ courses|length|pluralize }}</span>
+    <span class="epub-count-badge">{{ courses|length }} Course{{ courses|length|pluralize }}</span>
   </div>
 
   {% if courses %}
     <!-- Search/Filter -->
-    <div class="pdf-filter">
+    <div class="epub-filter">
       <input type="text" id="pdfSearch" placeholder="🔍 Search courses by name or category..." oninput="filterCourses()">
     </div>
 
     <!-- Grid -->
-    <div class="pdf-grid" id="pdfGrid">
+    <div class="epub-grid" id="pdfGrid">
       {% for course in courses %}
-        <div class="pdf-card-wrapper" data-title="{{ course.name|lower }}" data-category="{% if course.category %}{{ course.category.name|lower }}{% endif %}">
-          <a href="{% url 'elibrary_detail' course.pk %}" class="pdf-card">
-            <div class="pdf-card-img">
+        <div class="epub-card-wrapper" data-title="{{ course.name|lower }}" data-category="{% if course.category %}{{ course.category.name|lower }}{% endif %}">
+          <a href="{% url 'elibrary_detail' course.pk %}" class="epub-card">
+            <div class="epub-card-img">
               {% if course.thumbnail_url %}
                 <img src="{{ course.thumbnail_url }}" alt="{{ course.name }}" loading="lazy" decoding="async">
               {% else %}
                 📘
               {% endif %}
             </div>
-            <div class="pdf-card-body">
-              <div class="pdf-card-title">{{ course.name }}</div>
+            <div class="epub-card-body">
+              <div class="epub-card-title">{{ course.name }}</div>
               {% if course.category %}
-                <div class="pdf-card-category">{{ course.category.name }}</div>
+                <div class="epub-card-category">{{ course.category.name }}</div>
               {% endif %}
-              <div class="pdf-card-price-row">
-                <span class="pdf-price-now">₹{{ course.current_price|floatformat:0 }}</span>
+              <div class="epub-card-price-row">
+                <span class="epub-price-now">₹{{ course.current_price|floatformat:0 }}</span>
                 {% if course.original_price and course.original_price > course.current_price %}
-                  <span class="pdf-price-old">₹{{ course.original_price|floatformat:0 }}</span>
+                  <span class="epub-price-old">₹{{ course.original_price|floatformat:0 }}</span>
                 {% endif %}
               </div>
             </div>
           </a>
-          <div class="pdf-card-footer">
+          <div class="epub-card-footer">
             <form method="post" action="{% url 'add_to_cart' %}" style="flex:1;display:flex;">
               {% csrf_token %}
               <input type="hidden" name="item_id" value="{{ course.id }}">
               <input type="hidden" name="item_type" value="pdf">
               <input type="hidden" name="redirect_to" value="checkout">
-              <button type="submit" class="pdf-buy-btn">⚡ Buy Now</button>
+              <button type="submit" class="epub-buy-btn">⚡ Buy Now</button>
             </form>
             <form method="post" action="{% url 'add_to_cart' %}" style="flex:1;display:flex;">
               {% csrf_token %}
               <input type="hidden" name="item_id" value="{{ course.id }}">
               <input type="hidden" name="item_type" value="pdf">
-              <button type="submit" class="pdf-cart-btn">🛒 Add to Cart</button>
+              <button type="submit" class="epub-cart-btn">🛒 Add to Cart</button>
             </form>
           </div>
         </div>
@@ -276,8 +283,8 @@
     <div class="no-filter-result" id="noResult">😔 No courses match your search.</div>
 
   {% else %}
-    <div class="pdf-empty">
-      <div class="pdf-empty-icon">📘</div>
+    <div class="epub-empty">
+      <div class="epub-empty-icon">📘</div>
       <div style="font-size:1.1rem;font-weight:700;color:#1a1a2e;margin-bottom:8px;">No PDF Courses Available Yet</div>
       <div>Check back soon — new courses are added regularly.</div>
     </div>
@@ -288,7 +295,7 @@
 <script>
 function filterCourses() {
   const q = document.getElementById('pdfSearch').value.toLowerCase().trim();
-  const wrappers = document.querySelectorAll('.pdf-card-wrapper');
+  const wrappers = document.querySelectorAll('.epub-card-wrapper');
   let visible = 0;
   wrappers.forEach(w => {
     const match = !q || w.dataset.title.includes(q) || w.dataset.category.includes(q);

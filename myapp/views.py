@@ -202,7 +202,7 @@ def add_to_cart(request):
     if key not in cart:
         cart[key] = {'id': item_id, 'type': item_type}
         _save_cart(request, cart)
-        messages.success(request, '\u2705 Added to cart!')
+        messages.success(request, 'Added to your cart.')
     else:
         messages.info(request, 'Item is already in your cart.')
 
@@ -248,21 +248,21 @@ def apply_cart_coupon(request):
     try:
         coupon = Coupon.objects.get(code__iexact=code, is_active=True)
     except Coupon.DoesNotExist:
-        messages.error(request, '\u274c Invalid or expired coupon.')
+        messages.error(request, 'This coupon code is invalid or has expired.')
         return redirect('cart')
     if coupon.is_expired:
-        messages.error(request, '\u274c Coupon has expired.')
+        messages.error(request, 'This coupon has expired.')
         return redirect('cart')
     if coupon.remaining_uses <= 0:
-        messages.error(request, '\u274c Coupon usage limit reached.')
+        messages.error(request, 'This coupon has reached its usage limit.')
         return redirect('cart')
     if request.user.is_authenticated and CouponUsage.objects.filter(user=request.user, coupon=coupon).exists():
-        messages.warning(request, '\u26a0\ufe0f You have already used this coupon.')
+        messages.warning(request, 'You have already used this coupon.')
         return redirect('cart')
     request.session['applied_coupon_id']     = coupon.id
     request.session['applied_coupon_code']   = coupon.code
     request.session['applied_coupon_amount'] = str(coupon.amount)
-    messages.success(request, f'\u2705 Coupon \'{coupon.code}\' applied! Save \u20b9{coupon.amount}')
+    messages.success(request, f'Coupon \'{coupon.code}\' applied. You saved \u20b9{coupon.amount}.')
     return redirect('cart')
 
 
@@ -400,7 +400,7 @@ def hard_book_add(request):
                     HardBookImage.objects.create(book=book, dropbox_path=result['dropbox_path'])
                 else:
                     messages.error(request, f"Image {i} upload failed: {result['error']}")
-            messages.success(request, 'Hard book added successfully!')
+            messages.success(request, 'Book added successfully.')
             return redirect('hard_books_list')
         messages.error(request, 'Please correct the errors below.')
     else:
@@ -427,7 +427,7 @@ def hard_book_edit(request, pk):
                     HardBookImage.objects.create(book=book, dropbox_path=result['dropbox_path'])
                 else:
                     messages.error(request, f"Image upload failed: {result['error']}")
-            messages.success(request, 'Hard book updated successfully!')
+            messages.success(request, 'Book updated successfully.')
             return redirect('hard_books_list')
         messages.error(request, 'Please correct the errors below.')
     else:
@@ -442,7 +442,7 @@ def hard_book_delete(request, pk):
     book = get_object_or_404(HardBook, pk=pk)
     if request.method == 'POST':
         book.delete()
-        messages.success(request, 'Hard book deleted successfully!')
+        messages.success(request, 'Book deleted successfully.')
     return redirect('hard_books_list')
 
 
@@ -454,7 +454,7 @@ def hard_book_image_delete(request, pk):
         if img.dropbox_path:
             DropboxManager.delete_file(img.dropbox_path)
         img.delete()
-        messages.success(request, 'Image deleted successfully!')
+        messages.success(request, 'Image deleted successfully.')
         return redirect('hard_book_edit', pk=book_pk)
     return redirect('hard_book_edit', pk=book_pk)
 
@@ -486,7 +486,7 @@ def elibrary_add(request):
                 if result['success']:
                     course.dropbox_thumbnail_path = result['dropbox_path']
             course.save()
-            messages.success(request, 'E-Library course added successfully!')
+            messages.success(request, 'Course added successfully.')
             return redirect('elibrary_dashboard')
         messages.error(request, 'Please correct the errors below.')
     else:
@@ -511,7 +511,7 @@ def elibrary_edit(request, pk):
                 if result['success']:
                     course.dropbox_thumbnail_path = result['dropbox_path']
             course.save()
-            messages.success(request, 'E-Library course updated successfully!')
+            messages.success(request, 'Course updated successfully.')
             return redirect('elibrary_dashboard')
         messages.error(request, 'Please correct the errors below.')
     else:
@@ -524,7 +524,7 @@ def elibrary_delete(request, id):
     course = get_object_or_404(ELibraryModel, id=id)
     if request.method == 'POST':
         course.delete()
-        messages.success(request, 'Course deleted successfully!')
+        messages.success(request, 'Course deleted successfully.')
     return redirect('elibrary_dashboard')
 
 
@@ -559,11 +559,11 @@ def elibrary_upload_pdf(request, pk):
                 pdf.save()
 
                 if method == 'passthrough' or saved_pct <= 0:
-                    messages.success(request, f'\u2705 PDF uploaded! ({human_size(orig_size)} \u2014 already optimal)')
+                    messages.success(request, f'PDF uploaded ({human_size(orig_size)}, already at its smallest size).')
                 else:
                     messages.success(
                         request,
-                        f'\u2705 PDF uploaded & compressed via {method}! '
+                        f'PDF uploaded and compressed. '
                         f'{human_size(orig_size)} \u2192 {human_size(comp_size)} (saved {saved_pct}\u00a0%)'
                     )
 
@@ -586,7 +586,7 @@ def elibrary_pdf_delete(request, pk):
         if pdf.dropbox_path:
             DropboxManager.delete_file(pdf.dropbox_path)
         pdf.delete()
-        messages.success(request, 'PDF deleted successfully!')
+        messages.success(request, 'PDF deleted successfully.')
     return redirect('elibrary_dashboard')
 
 
@@ -620,11 +620,11 @@ def elibrary_pdf_replace(request, pk):
             pdf.dropbox_path = result['dropbox_path']
             pdf.save(update_fields=['dropbox_path'])
             if method == 'passthrough' or saved_pct <= 0:
-                messages.success(request, f'\u2705 PDF replaced! ({human_size(orig_size)} \u2014 already optimal)')
+                messages.success(request, f'PDF replaced ({human_size(orig_size)}, already at its smallest size).')
             else:
                 messages.success(
                     request,
-                    f'\u2705 PDF replaced & compressed via {method}! '
+                    f'PDF replaced and compressed. '
                     f'{human_size(orig_size)} \u2192 {human_size(comp_size)} (saved {saved_pct}\u00a0%)'
                 )
         else:
@@ -705,7 +705,7 @@ def navbar_custom(request):
 
             setting.save()
             cache.delete('navbar_setting')
-            messages.success(request, 'Navbar settings updated successfully!')
+            messages.success(request, 'Navbar settings updated successfully.')
             return redirect('dashboard')
         messages.error(request, 'Please correct the errors below.')
     else:
@@ -739,7 +739,7 @@ def banner_custom(request):
                 else:
                     messages.warning(request, f"Dropbox backup of banner failed: {result['error']}")
 
-                messages.success(request, 'Banner uploaded successfully!')
+                messages.success(request, 'Banner uploaded successfully.')
                 return redirect('banner_custom')
             messages.error(request, 'Please select a valid image.')
         elif action == 'toggle':
@@ -754,7 +754,7 @@ def banner_custom(request):
             if banner.dropbox_path:
                 DropboxManager.delete_file(banner.dropbox_path)
             banner.delete()
-            messages.success(request, 'Banner deleted successfully!')
+            messages.success(request, 'Banner deleted successfully.')
             return redirect('banner_custom')
     return render(request, 'banner.html', {'upload_form': upload_form, 'desktop_banners': desktop_banners, 'mobile_banners': mobile_banners})
 
@@ -766,7 +766,7 @@ def stats_custom(request):
         form = StatsSettingForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Stats item added successfully!')
+            messages.success(request, 'Stat added successfully.')
             return redirect('stats_custom')
         messages.error(request, 'Please correct the errors below.')
     else:
@@ -781,7 +781,7 @@ def stats_edit(request, pk):
         form = StatsSettingForm(request.POST, instance=stat)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Stats item updated successfully!')
+            messages.success(request, 'Stat updated successfully.')
             return redirect('stats_custom')
         messages.error(request, 'Please correct the errors below.')
     else:
@@ -793,7 +793,7 @@ def stats_edit(request, pk):
 def stats_delete(request, pk):
     stat = get_object_or_404(StatsSetting, pk=pk)
     stat.delete()
-    messages.success(request, 'Stats item deleted successfully!')
+    messages.success(request, 'Stat deleted successfully.')
     return redirect('stats_custom')
 
 
@@ -816,7 +816,7 @@ def about_custom(request):
         if form.is_valid():
             form.save()
             cache.delete('about_setting')
-            messages.success(request, 'About section updated successfully!')
+            messages.success(request, 'About section updated successfully.')
             return redirect('about_custom')
         messages.error(request, 'Please correct the errors below.')
     else:
@@ -834,7 +834,7 @@ def footer_custom(request):
         if form.is_valid():
             form.save()
             cache.delete('footer_setting')
-            messages.success(request, 'Footer updated!')
+            messages.success(request, 'Footer updated successfully.')
             return redirect('footer_custom')
         messages.error(request, 'Please correct the errors below.')
     else:
@@ -866,7 +866,7 @@ def pwa_custom(request):
 
             setting.save()
             cache.delete('pwa_setting')
-            messages.success(request, 'PWA settings updated successfully!')
+            messages.success(request, 'PWA settings updated successfully.')
             return redirect('pwa_custom')
         messages.error(request, 'Please correct the errors below.')
     else:
@@ -896,7 +896,7 @@ def category_list(request):
                 image_file.seek(0)
             category.save()
             cache.delete('home_categories')
-            messages.success(request, f"Category '{category.name}' created!")
+            messages.success(request, f"Category '{category.name}' created successfully.")
             return redirect('category_list')
         messages.error(request, 'Please correct the errors below.')
     else:
@@ -935,7 +935,7 @@ def category_edit(request, pk):
                 category.image = image_file
             category.save()
             cache.delete('home_categories')
-            messages.success(request, f"Category '{category.name}' updated!")
+            messages.success(request, f"Category '{category.name}' updated successfully.")
         else:
             messages.error(request, 'Category name is required.')
     return redirect('category_list')
@@ -951,7 +951,7 @@ def category_delete(request, pk):
             DropboxManager.delete_file(category.dropbox_path)
         category.delete()
         cache.delete('home_categories')
-        messages.success(request, 'Category deleted!')
+        messages.success(request, 'Category deleted successfully.')
     return redirect('category_list')
 
 
@@ -963,7 +963,7 @@ def category_toggle_active(request, pk):
         category.save()
         cache.delete('home_categories')
         status = 'activated' if category.is_active else 'deactivated'
-        messages.success(request, f"Category '{category.name}' {status}!")
+        messages.success(request, f"Category '{category.name}' {status}.")
     return redirect('category_list')
 
 
@@ -975,7 +975,7 @@ def coupon_list(request):
         form = CouponForm(request.POST)
         if form.is_valid():
             coupon = form.save()
-            messages.success(request, f"Coupon '{coupon.code}' created!")
+            messages.success(request, f"Coupon '{coupon.code}' created successfully.")
             return redirect('coupon_list')
         messages.error(request, 'Please correct the errors below.')
     else:
@@ -988,7 +988,7 @@ def coupon_delete(request, pk):
     coupon = get_object_or_404(Coupon, pk=pk)
     if request.method == 'POST':
         coupon.delete()
-        messages.success(request, 'Coupon deleted!')
+        messages.success(request, 'Coupon deleted successfully.')
     return redirect('dashboard')
 
 
@@ -997,7 +997,7 @@ def coupon_toggle_active(request, pk):
     coupon = get_object_or_404(Coupon, pk=pk)
     new_status = not coupon.is_active
     Coupon.objects.filter(pk=pk).update(is_active=new_status)
-    messages.success(request, f"Coupon '{coupon.code}' {'activated' if new_status else 'deactivated'}!")
+    messages.success(request, f"Coupon '{coupon.code}' {'activated' if new_status else 'deactivated'}.")
     return redirect('coupon_list')
 
 
@@ -1015,7 +1015,7 @@ def notifications_section(request):
             notification         = form.save(commit=False)
             notification.sent_at = timezone.now()
             notification.save()
-            messages.success(request, 'Notification sent!')
+            messages.success(request, 'Notification sent successfully.')
             return redirect('notifications_section')
     else:
         form = NotificationForm()
@@ -1031,7 +1031,7 @@ def delete_notification(request, notification_id):
     notification = get_object_or_404(Notification, id=notification_id)
     if request.method == 'POST':
         notification.delete()
-        messages.success(request, 'Notification deleted!')
+        messages.success(request, 'Notification deleted successfully.')
         return redirect('notifications_section')
     return render(request, 'admin/confirm_delete.html', {'object': notification, 'action': 'delete notification', 'next_url': 'notifications_section'})
 
@@ -1042,7 +1042,7 @@ def add_user(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, 'User created!')
+            messages.success(request, 'User account created successfully.')
             return redirect('dashboard')
     else:
         form = CustomUserCreationForm()
@@ -1055,7 +1055,7 @@ def edit_user(request, user_id):
         form = CustomUserChangeForm(request.POST, instance=user)
         if form.is_valid():
             form.save()
-            messages.success(request, f'User {user.username} updated!')
+            messages.success(request, f"User '{user.username}' updated successfully.")
             return redirect('dashboard')
     else:
         form = CustomUserChangeForm(instance=user)
@@ -1067,7 +1067,7 @@ def delete_user(request, user_id):
     if request.method == 'POST':
         username = user.username
         user.delete()
-        messages.success(request, f'User {username} deleted!')
+        messages.success(request, f"User '{username}' deleted successfully.")
         return redirect('dashboard')
     return redirect('dashboard')
 
@@ -1302,26 +1302,26 @@ def apply_coupon(request):
     try:
         coupon = Coupon.objects.get(code__iexact=code)
     except Coupon.DoesNotExist:
-        messages.error(request, '\u274c Invalid coupon code.')
+        messages.error(request, 'This coupon code is invalid.')
         return redirect(redirect_url)
 
     if not coupon.is_active:
-        messages.error(request, '\u274c This coupon is no longer active.')
+        messages.error(request, 'This coupon is no longer active.')
         return redirect(redirect_url)
     if coupon.is_expired:
-        messages.error(request, '\u274c This coupon has expired.')
+        messages.error(request, 'This coupon has expired.')
         return redirect(redirect_url)
     if coupon.remaining_uses <= 0:
-        messages.error(request, '\u274c This coupon has reached its usage limit.')
+        messages.error(request, 'This coupon has reached its usage limit.')
         return redirect(redirect_url)
     if CouponUsage.objects.filter(user=request.user, coupon=coupon).exists():
-        messages.warning(request, '\u26a0\ufe0f You have already used this coupon.')
+        messages.warning(request, 'You have already used this coupon.')
         return redirect(redirect_url)
 
     request.session['applied_coupon_id']     = coupon.id
     request.session['applied_coupon_code']   = coupon.code
     request.session['applied_coupon_amount'] = str(coupon.amount)
-    messages.success(request, f"\u2705 Coupon '{coupon.code}' saved! \u20b9{coupon.amount} discount will apply at checkout.")
+    messages.success(request, f"Coupon '{coupon.code}' saved. \u20b9{coupon.amount} discount will apply at checkout.")
     return redirect(redirect_url)
 
 
@@ -1375,7 +1375,7 @@ def user_login(request):
         user = authenticate(request, username=user_obj.username, password=password)
         if user is not None:
             login(request, user)
-            messages.success(request, 'Login successful!')
+            messages.success(request, 'Welcome back! You are now logged in.')
             return redirect(request.POST.get('next') or request.GET.get('next') or 'home')
         messages.error(request, 'Incorrect password. Please try again.')
         return redirect('login')
@@ -1399,7 +1399,7 @@ def signup(request):
             return redirect('signup')
 
         if User.objects.filter(email__iexact=email).exists():
-            messages.error(request, 'An account with this email already exists. Please login.')
+            messages.error(request, 'An account with this email already exists. Please log in instead.')
             return redirect('signup')
 
         username = email

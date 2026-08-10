@@ -2,9 +2,6 @@
 <div class="messages-wrap" id="messagesWrap">
   {% for message in messages %}
     <div class="flash-message {{ message.tags }}">
-      <div class="flash-icon">
-        {% if message.tags == 'success' %}✅{% elif message.tags == 'error' %}⚠️{% elif message.tags == 'warning' %}⚡{% else %}ℹ️{% endif %}
-      </div>
       <div class="flash-text">{{ message }}</div>
       <button type="button" class="flash-close" onclick="this.parentElement.remove()">×</button>
     </div>
@@ -42,12 +39,6 @@
   .flash-message.error{border-left-color:#e84444}
   .flash-message.warning{border-left-color:#e8b400}
   .flash-message.info{border-left-color:#1a3a8f}
-
-  .flash-icon{
-    flex-shrink:0;
-    font-size:1rem;
-    margin-top:1px;
-  }
 
   .flash-text{
     flex:1;

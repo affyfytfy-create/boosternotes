@@ -302,7 +302,6 @@
     {% if messages %}
       {% for message in messages %}
       <div class="form-error" style="{% if message.tags == 'success' %}background:#f0fff8;border-color:#b2f0d8;color:#1d9e75;{% endif %}">
-        <span>{% if message.tags == 'success' %}✅{% else %}⚠️{% endif %}</span>
         <div>{{ message }}</div>
       </div>
       {% endfor %}

@@ -27,24 +27,24 @@ def backup_panel(request):
                 timestamp = backup_to_dropbox()
                 messages.success(
                     request,
-                    f'✅ Backup successful! Saved as db_{timestamp}.sqlite3 on Dropbox.'
+                    f'Backup completed. Saved as db_{timestamp}.sqlite3 on Dropbox.'
                 )
             except Exception as e:
-                messages.error(request, f'❌ Backup failed: {str(e)}')
+                messages.error(request, f'Backup failed: {str(e)}')
 
         elif action == 'restore':
             selected_file = request.POST.get('restore_file', '').strip()
             if not selected_file:
-                messages.error(request, '❌ Please select a backup file to restore.')
+                messages.error(request, 'Please select a backup file to restore.')
             else:
                 try:
                     restore_from_dropbox(selected_file)
                     messages.success(
                         request,
-                        f'✅ Database restored from {selected_file} successfully! Restart the server if changes are not visible.'
+                        f'Database restored from {selected_file}. Restart the server if changes are not visible.'
                     )
                 except Exception as e:
-                    messages.error(request, f'❌ Restore failed: {str(e)}')
+                    messages.error(request, f'Restore failed: {str(e)}')
 
         return redirect('backup_panel')
 
