@@ -334,8 +334,8 @@
   <div class="cat-header">
     <div class="cat-header-left">
       <h2>
-        {% if category.image %}
-          <img src="{{ category.image.url }}" alt="" style="width:32px;height:32px;border-radius:8px;object-fit:cover;">
+        {% if category.image_url %}
+          <img src="{{ category.image_url }}" alt="" style="width:32px;height:32px;border-radius:8px;object-fit:cover;">
         {% else %}
           <i class="fa-solid fa-folder-open"></i>
         {% endif %}

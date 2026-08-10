@@ -470,8 +470,8 @@
         {% for cat in category_results %}
         <a href="{% url 'category_courses_view' cat.id %}" class="cat-card-search">
           <div class="cat-icon">
-            {% if cat.image %}
-              <img src="{{ cat.image.url }}" alt="{{ cat.name }}">
+            {% if cat.image_url %}
+              <img src="{{ cat.image_url }}" alt="{{ cat.name }}">
             {% else %}
               🎯
             {% endif %}

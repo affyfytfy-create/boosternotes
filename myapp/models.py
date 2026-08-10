@@ -102,7 +102,13 @@ class NavbarSetting(models.Model):
     brand_name = models.CharField(max_length=100, default="BoosterNotes", verbose_name="Brand Name")
     tagline = models.CharField(max_length=100, default="Smart Notes. Smart Rank", verbose_name="Tagline")
     logo = models.ImageField(upload_to='logos/', blank=True, null=True, verbose_name="Logo Image")
+    logo_dropbox_path = models.CharField(max_length=500, blank=True, null=True)
+    logo_dropbox_url_cached = models.CharField(max_length=1000, blank=True, null=True, verbose_name="Cached Dropbox Logo URL")
+    logo_dropbox_url_expires = models.DateTimeField(blank=True, null=True, verbose_name="Cached Logo URL Expiry")
     favicon = models.ImageField(upload_to='favicons/', blank=True, null=True, verbose_name="Favicon")
+    favicon_dropbox_path = models.CharField(max_length=500, blank=True, null=True)
+    favicon_dropbox_url_cached = models.CharField(max_length=1000, blank=True, null=True, verbose_name="Cached Dropbox Favicon URL")
+    favicon_dropbox_url_expires = models.DateTimeField(blank=True, null=True, verbose_name="Cached Favicon URL Expiry")
     search_placeholder = models.CharField(max_length=200, default="Search pdf courses, exams...", verbose_name="Search Placeholder")
     whatsapp_number = models.CharField(max_length=20, default="6350331916", verbose_name="WhatsApp Number")
     whatsapp_hours = models.CharField(max_length=50, default="10 AM to 7 PM", verbose_name="WhatsApp Hours")
@@ -116,10 +122,71 @@ class NavbarSetting(models.Model):
     def __str__(self):
         return f"Navbar - {self.brand_name}"
 
+    @property
+    def logo_url(self):
+        """Same cache/refresh/fallback pattern as ELibraryModel.thumbnail_url."""
+        if self.logo_dropbox_url_cached and self.logo_dropbox_url_expires:
+            if self.logo_dropbox_url_expires > timezone.now() + timedelta(minutes=30):
+                return self.logo_dropbox_url_cached
+
+        if self.logo_dropbox_path:
+            try:
+                from .dropbox_utils import DropboxManager
+                link = DropboxManager.get_temporary_link(self.logo_dropbox_path)
+                if link:
+                    NavbarSetting.objects.filter(pk=self.pk).update(
+                        logo_dropbox_url_cached=link,
+                        logo_dropbox_url_expires=timezone.now() + timedelta(hours=4),
+                    )
+                    return link
+            except Exception:
+                pass
+            if self.logo_dropbox_url_cached:
+                return self.logo_dropbox_url_cached
+
+        if self.logo:
+            try:
+                return self.logo.url
+            except Exception:
+                pass
+        return None
+
+    @property
+    def favicon_url(self):
+        """Same cache/refresh/fallback pattern as ELibraryModel.thumbnail_url."""
+        if self.favicon_dropbox_url_cached and self.favicon_dropbox_url_expires:
+            if self.favicon_dropbox_url_expires > timezone.now() + timedelta(minutes=30):
+                return self.favicon_dropbox_url_cached
+
+        if self.favicon_dropbox_path:
+            try:
+                from .dropbox_utils import DropboxManager
+                link = DropboxManager.get_temporary_link(self.favicon_dropbox_path)
+                if link:
+                    NavbarSetting.objects.filter(pk=self.pk).update(
+                        favicon_dropbox_url_cached=link,
+                        favicon_dropbox_url_expires=timezone.now() + timedelta(hours=4),
+                    )
+                    return link
+            except Exception:
+                pass
+            if self.favicon_dropbox_url_cached:
+                return self.favicon_dropbox_url_cached
+
+        if self.favicon:
+            try:
+                return self.favicon.url
+            except Exception:
+                pass
+        return None
+
 
 class BannerSetting(models.Model):
     BANNER_TYPE_CHOICES = [('desktop', 'Desktop'), ('mobile', 'Mobile')]
     image = models.ImageField(upload_to='banners/', verbose_name="Banner Image", blank=True, null=True)
+    dropbox_path = models.CharField(max_length=500, blank=True, null=True)
+    dropbox_url_cached = models.CharField(max_length=1000, blank=True, null=True, verbose_name="Cached Dropbox Image URL")
+    dropbox_url_expires = models.DateTimeField(blank=True, null=True, verbose_name="Cached Image URL Expiry")
     banner_type = models.CharField(max_length=10, choices=BANNER_TYPE_CHOICES, default='desktop', verbose_name="Banner Type")
     order = models.PositiveIntegerField(default=0, verbose_name="Display Order")
     is_active = models.BooleanField(default=True, verbose_name="Is Active")
@@ -132,6 +199,35 @@ class BannerSetting(models.Model):
 
     def __str__(self):
         return f"{self.get_banner_type_display()} Banner #{self.pk}"
+
+    @property
+    def display_url(self):
+        """Same cache/refresh/fallback pattern as ELibraryModel.thumbnail_url."""
+        if self.dropbox_url_cached and self.dropbox_url_expires:
+            if self.dropbox_url_expires > timezone.now() + timedelta(minutes=30):
+                return self.dropbox_url_cached
+
+        if self.dropbox_path:
+            try:
+                from .dropbox_utils import DropboxManager
+                link = DropboxManager.get_temporary_link(self.dropbox_path)
+                if link:
+                    BannerSetting.objects.filter(pk=self.pk).update(
+                        dropbox_url_cached=link,
+                        dropbox_url_expires=timezone.now() + timedelta(hours=4),
+                    )
+                    return link
+            except Exception:
+                pass
+            if self.dropbox_url_cached:
+                return self.dropbox_url_cached
+
+        if self.image:
+            try:
+                return self.image.url
+            except Exception:
+                pass
+        return None
 
 
 class StatsSetting(models.Model):
@@ -215,6 +311,9 @@ class FooterSetting(models.Model):
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name="Category Name")
     image = models.ImageField(upload_to='categories/', blank=True, null=True, verbose_name="Category Image")
+    dropbox_path = models.CharField(max_length=500, blank=True, null=True)
+    dropbox_url_cached = models.CharField(max_length=1000, blank=True, null=True, verbose_name="Cached Dropbox Image URL")
+    dropbox_url_expires = models.DateTimeField(blank=True, null=True, verbose_name="Cached Image URL Expiry")
     description = models.TextField(blank=True, null=True, verbose_name="Description")
     is_active = models.BooleanField(default=True, verbose_name="Is Active")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -230,6 +329,26 @@ class Category(models.Model):
 
     @property
     def image_url(self):
+        """Same cache/refresh/fallback pattern as ELibraryModel.thumbnail_url."""
+        if self.dropbox_url_cached and self.dropbox_url_expires:
+            if self.dropbox_url_expires > timezone.now() + timedelta(minutes=30):
+                return self.dropbox_url_cached
+
+        if self.dropbox_path:
+            try:
+                from .dropbox_utils import DropboxManager
+                link = DropboxManager.get_temporary_link(self.dropbox_path)
+                if link:
+                    Category.objects.filter(pk=self.pk).update(
+                        dropbox_url_cached=link,
+                        dropbox_url_expires=timezone.now() + timedelta(hours=4),
+                    )
+                    return link
+            except Exception:
+                pass
+            if self.dropbox_url_cached:
+                return self.dropbox_url_cached
+
         if self.image and hasattr(self.image, 'url'):
             return self.image.url
         return None

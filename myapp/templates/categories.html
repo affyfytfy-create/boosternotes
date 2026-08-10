@@ -117,8 +117,8 @@
             {% for category in categories %}
             <tr>
               <td>
-                {% if category.image %}
-                  <img src="{{ category.image.url }}" alt="{{ category.name }}" class="category-thumb">
+                {% if category.image_url %}
+                  <img src="{{ category.image_url }}" alt="{{ category.name }}" class="category-thumb">
                 {% else %}
                   <div class="category-thumb-empty">📁</div>
                 {% endif %}

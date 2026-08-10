@@ -49,8 +49,8 @@
         {% for banner in desktop_banners %}
         <div class="banner-card {% if not banner.is_active %}inactive{% endif %}">
           <div class="banner-img-wrap">
-            {% if banner.image %}
-            <img src="{{ banner.image.url }}" alt="Desktop Banner #{{ banner.pk }}">
+            {% if banner.display_url %}
+            <img src="{{ banner.display_url }}" alt="Desktop Banner #{{ banner.pk }}">
             {% else %}
             <div class="no-image">No Image</div>
             {% endif %}
@@ -92,8 +92,8 @@
         {% for banner in mobile_banners %}
         <div class="banner-card {% if not banner.is_active %}inactive{% endif %}">
           <div class="banner-img-wrap">
-            {% if banner.image %}
-            <img src="{{ banner.image.url }}" alt="Mobile Banner #{{ banner.pk }}">
+            {% if banner.display_url %}
+            <img src="{{ banner.display_url }}" alt="Mobile Banner #{{ banner.pk }}">
             {% else %}
             <div class="no-image">No Image</div>
             {% endif %}

@@ -38,6 +38,9 @@ class DropboxPaths:
     BACKUPS   = f"{ROOT}/Backups"
     ELIBRARY  = f"{ROOT}/eLibrary"
     HARDBOOKS = f"{ROOT}/HardBooks"
+    NAVBAR    = f"{ROOT}/Navbar"
+    BANNERS   = f"{ROOT}/Banners"
+    CATEGORIES = f"{ROOT}/Categories"
 
     @staticmethod
     def _slug(name: str) -> str:
@@ -72,6 +75,23 @@ class DropboxPaths:
     @classmethod
     def hardbooks_images(cls) -> str:
         return f"{cls.HARDBOOKS}/Images"
+
+    # ─ site-customization paths ────────────────────────────────────────────────────
+    @classmethod
+    def navbar_logos(cls) -> str:
+        return f"{cls.NAVBAR}/Logos"
+
+    @classmethod
+    def navbar_favicons(cls) -> str:
+        return f"{cls.NAVBAR}/Favicons"
+
+    @classmethod
+    def banners(cls) -> str:
+        return cls.BANNERS
+
+    @classmethod
+    def categories(cls) -> str:
+        return cls.CATEGORIES
 
 
 class DropboxManager:

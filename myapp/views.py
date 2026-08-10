@@ -636,14 +636,42 @@ def navbar_custom(request):
     if request.method == 'POST':
         form = NavbarSettingForm(request.POST, request.FILES, instance=setting)
         if form.is_valid():
-            form.save()
+            setting = form.save(commit=False)
+
+            if 'logo' in request.FILES:
+                logo_file = request.FILES['logo']
+                result = DropboxManager.upload_file(
+                    file_obj=logo_file,
+                    file_name=logo_file.name,
+                    folder_path=DropboxPaths.navbar_logos(),
+                )
+                if result['success']:
+                    setting.logo_dropbox_path = result['dropbox_path']
+                else:
+                    messages.warning(request, f"Logo Dropbox upload failed: {result['error']}")
+                logo_file.seek(0)
+
+            if 'favicon' in request.FILES:
+                favicon_file = request.FILES['favicon']
+                result = DropboxManager.upload_file(
+                    file_obj=favicon_file,
+                    file_name=favicon_file.name,
+                    folder_path=DropboxPaths.navbar_favicons(),
+                )
+                if result['success']:
+                    setting.favicon_dropbox_path = result['dropbox_path']
+                else:
+                    messages.warning(request, f"Favicon Dropbox upload failed: {result['error']}")
+                favicon_file.seek(0)
+
+            setting.save()
             cache.delete('navbar_setting')
             messages.success(request, 'Navbar settings updated successfully!')
             return redirect('dashboard')
         messages.error(request, 'Please correct the errors below.')
     else:
         form = NavbarSettingForm(instance=setting)
-    return render(request, 'navbar.html', {'form': form})
+    return render(request, 'navbar.html', {'form': form, 'object': setting})
 
 
 @login_required
@@ -656,7 +684,22 @@ def banner_custom(request):
         if action == 'upload':
             upload_form = BannerUploadForm(request.POST, request.FILES)
             if upload_form.is_valid():
-                BannerSetting.objects.create(image=upload_form.cleaned_data['image'], banner_type=upload_form.cleaned_data['banner_type'], is_active=True)
+                image_file  = upload_form.cleaned_data['image']
+                banner_type = upload_form.cleaned_data['banner_type']
+                banner = BannerSetting.objects.create(image=image_file, banner_type=banner_type, is_active=True)
+
+                image_file.seek(0)
+                result = DropboxManager.upload_file(
+                    file_obj=image_file,
+                    file_name=f"{banner_type}_{banner.pk}_{image_file.name}",
+                    folder_path=DropboxPaths.banners(),
+                )
+                if result['success']:
+                    banner.dropbox_path = result['dropbox_path']
+                    banner.save(update_fields=['dropbox_path'])
+                else:
+                    messages.warning(request, f"Dropbox backup of banner failed: {result['error']}")
+
                 messages.success(request, 'Banner uploaded successfully!')
                 return redirect('banner_custom')
             messages.error(request, 'Please select a valid image.')
@@ -669,6 +712,8 @@ def banner_custom(request):
         elif action == 'delete':
             banner = get_object_or_404(BannerSetting, pk=request.POST.get('banner_id'))
             banner.image.delete(save=False)
+            if banner.dropbox_path:
+                DropboxManager.delete_file(banner.dropbox_path)
             banner.delete()
             messages.success(request, 'Banner deleted successfully!')
             return redirect('banner_custom')
@@ -765,7 +810,20 @@ def category_list(request):
     if request.method == 'POST':
         form = CategoryForm(request.POST, request.FILES)
         if form.is_valid():
-            category = form.save()
+            category = form.save(commit=False)
+            if 'image' in request.FILES:
+                image_file = request.FILES['image']
+                result = DropboxManager.upload_file(
+                    file_obj=image_file,
+                    file_name=f"{category.name}_{image_file.name}",
+                    folder_path=DropboxPaths.categories(),
+                )
+                if result['success']:
+                    category.dropbox_path = result['dropbox_path']
+                else:
+                    messages.warning(request, f"Dropbox backup of category image failed: {result['error']}")
+                image_file.seek(0)
+            category.save()
             cache.delete('home_categories')
             messages.success(request, f"Category '{category.name}' created!")
             return redirect('category_list')
@@ -789,7 +847,21 @@ def category_edit(request, pk):
             if 'image' in request.FILES:
                 if category.image and default_storage.exists(category.image.name):
                     default_storage.delete(category.image.name)
-                category.image = request.FILES['image']
+                if category.dropbox_path:
+                    DropboxManager.delete_file(category.dropbox_path)
+
+                image_file = request.FILES['image']
+                result = DropboxManager.upload_file(
+                    file_obj=image_file,
+                    file_name=f"{name}_{image_file.name}",
+                    folder_path=DropboxPaths.categories(),
+                )
+                if result['success']:
+                    category.dropbox_path = result['dropbox_path']
+                else:
+                    messages.warning(request, f"Dropbox backup of category image failed: {result['error']}")
+                image_file.seek(0)
+                category.image = image_file
             category.save()
             cache.delete('home_categories')
             messages.success(request, f"Category '{category.name}' updated!")
@@ -804,6 +876,8 @@ def category_delete(request, pk):
     if request.method == 'POST':
         if category.image and default_storage.exists(category.image.name):
             default_storage.delete(category.image.name)
+        if category.dropbox_path:
+            DropboxManager.delete_file(category.dropbox_path)
         category.delete()
         cache.delete('home_categories')
         messages.success(request, 'Category deleted!')

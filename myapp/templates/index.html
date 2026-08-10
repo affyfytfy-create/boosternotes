@@ -14,9 +14,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <title>{{ navbar.brand_name|default:"BoosterNotes" }}</title>
 
   <!-- Favicon -->
-  {% if navbar.favicon %}
-  <link rel="icon" href="{{ navbar.favicon.url }}" type="image/png">
-  <link rel="shortcut icon" href="{{ navbar.favicon.url }}" type="image/png">
+  {% if navbar.favicon_url %}
+  <link rel="icon" href="{{ navbar.favicon_url }}" type="image/png">
+  <link rel="shortcut icon" href="{{ navbar.favicon_url }}" type="image/png">
   {% else %}
   <link rel="icon" href="{% static 'img/favicon.ico' %}" type="image/x-icon">
   <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}" type="image/x-icon">
@@ -26,10 +26,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
   {% if desktop_banners %}
-  <link rel="preload" as="image" href="{{ desktop_banners.0.image.url }}" media="(min-width:641px)">
+  <link rel="preload" as="image" href="{{ desktop_banners.0.display_url }}" media="(min-width:641px)">
   {% endif %}
   {% if mobile_banners %}
-  <link rel="preload" as="image" href="{{ mobile_banners.0.image.url }}" media="(max-width:640px)">
+  <link rel="preload" as="image" href="{{ mobile_banners.0.display_url }}" media="(max-width:640px)">
   {% endif %}
 
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
@@ -785,8 +785,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 {% block navbar %}
 <nav>
   <a href="{% url 'home' %}" class="logo-wrap" id="logoWrap">
-    {% if site_settings.logo %}
-    <img src="{{ site_settings.logo.url }}" alt="{{ navbar.brand_name }} Logo" class="logo-img" id="logoImg"
+    {% if site_settings.logo_url %}
+    <img src="{{ site_settings.logo_url }}" alt="{{ navbar.brand_name }} Logo" class="logo-img" id="logoImg"
          width="120" height="40" fetchpriority="high" onerror="handleLogoError()">
     {% endif %}
     <div class="logo-fallback" id="logoFallback">
@@ -916,10 +916,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       {% for banner in desktop_banners %}
       <div class="banner-slide {% if forloop.first %}active{% endif %}">
         {% if forloop.first %}
-        <img src="{{ banner.image.url }}" alt="Desktop Banner {{ forloop.counter }}"
+        <img src="{{ banner.display_url }}" alt="Desktop Banner {{ forloop.counter }}"
              fetchpriority="high" decoding="sync" width="1200" height="480">
         {% else %}
-        <img data-src="{{ banner.image.url }}"
+        <img data-src="{{ banner.display_url }}"
              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
              alt="Desktop Banner {{ forloop.counter }}" class="lazy" loading="lazy" decoding="async" width="1200" height="480">
         {% endif %}
@@ -938,10 +938,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       {% for banner in mobile_banners %}
       <div class="banner-slide {% if forloop.first %}active{% endif %}">
         {% if forloop.first %}
-        <img src="{{ banner.image.url }}" alt="Mobile Banner {{ forloop.counter }}"
+        <img src="{{ banner.display_url }}" alt="Mobile Banner {{ forloop.counter }}"
              fetchpriority="high" decoding="sync" width="640" height="360">
         {% else %}
-        <img data-src="{{ banner.image.url }}"
+        <img data-src="{{ banner.display_url }}"
              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
              alt="Mobile Banner {{ forloop.counter }}" class="lazy" loading="lazy" decoding="async" width="640" height="360">
         {% endif %}
@@ -1022,8 +1022,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
              class="cat-box {% if forloop.first %}active{% endif %}"
              onclick="activateCat(this)">
             <div class="cat-box-img">
-              {% if category.image %}
-                <img src="{{ category.image.url }}" alt="{{ category.name }}" width="52" height="52"
+              {% if category.image_url %}
+                <img src="{{ category.image_url }}" alt="{{ category.name }}" width="52" height="52"
                      loading="lazy" decoding="async"
                      onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                 <span class="cat-fallback" style="display:none;">📚</span>

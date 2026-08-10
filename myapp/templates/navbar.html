@@ -31,8 +31,8 @@
         <div class="custom-group">
           <label>Logo Image</label>
           {{ form.logo }}
-          {% if object.logo %}
-          <img src="{{ object.logo.url }}" alt="Current Logo" style="max-width:150px;margin-top:8px;border-radius:8px;">
+          {% if object.logo_url %}
+          <img src="{{ object.logo_url }}" alt="Current Logo" style="max-width:150px;margin-top:8px;border-radius:8px;">
           {% endif %}
           <div class="custom-error">{{ form.logo.errors }}</div>
         </div>
@@ -40,9 +40,9 @@
         <div class="custom-group">
           <label>Favicon (16x16 or 32x32 PNG)</label>
           {{ form.favicon }}
-          {% if object.favicon %}
-          <img src="{{ object.favicon.url }}" alt="Current Favicon" style="max-width:50px;margin-top:8px;border:1px solid #ddd;border-radius:4px;">
-          <p style="font-size:0.78rem;color:#888;margin-top:4px;">Current: {{ object.favicon.url }}</p>
+          {% if object.favicon_url %}
+          <img src="{{ object.favicon_url }}" alt="Current Favicon" style="max-width:50px;margin-top:8px;border:1px solid #ddd;border-radius:4px;">
+          <p style="font-size:0.78rem;color:#888;margin-top:4px;">Current: {{ object.favicon_url }}</p>
           {% endif %}
           <div class="custom-error">{{ form.favicon.errors }}</div>
         </div>
