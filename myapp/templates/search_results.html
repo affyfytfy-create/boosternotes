@@ -471,7 +471,7 @@
         <a href="{% url 'category_courses_view' cat.id %}" class="cat-card-search">
           <div class="cat-icon">
             {% if cat.image_url %}
-              <img src="{{ cat.image_url }}" alt="{{ cat.name }}">
+              <img src="{{ cat.image_url }}" alt="{{ cat.name }}" loading="lazy" decoding="async">
             {% else %}
               🎯
             {% endif %}
@@ -497,8 +497,8 @@
         <div class="pdf-card-search">
           <a href="{% url 'elibrary_detail' course.id %}" style="text-decoration:none;color:inherit;">
             <div class="pdf-thumb-search">
-              {% if course.thumbnail %}
-                <img src="{{ course.thumbnail.url }}" alt="{{ course.name }}">
+              {% if course.thumbnail_url %}
+                <img src="{{ course.thumbnail_url }}" alt="{{ course.name }}" loading="lazy" decoding="async">
               {% else %}
                 <span class="pdf-emoji">📘</span>
               {% endif %}
@@ -540,8 +540,8 @@
           <a href="{% url 'hard_book_detail' book.id %}" style="text-decoration:none;color:inherit;">
             <div class="book-thumb-search">
               {% with first_img=book.images.all.0 %}
-                {% if first_img %}
-                  <img src="{{ first_img.image.url }}" alt="{{ book.title }}">
+                {% if first_img and first_img.preview_url %}
+                  <img src="{{ first_img.preview_url }}" alt="{{ book.title }}" loading="lazy" decoding="async">
                 {% else %}
                   <span class="book-emoji">📖</span>
                 {% endif %}

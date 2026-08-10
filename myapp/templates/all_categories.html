@@ -327,7 +327,7 @@
       <a href="{% url 'category_courses_view' category.id %}" class="allcat-card">
         <div class="allcat-card-icon">
           {% if category.image_url %}
-            <img src="{{ category.image_url }}" alt="{{ category.name }}">
+            <img src="{{ category.image_url }}" alt="{{ category.name }}" loading="lazy" decoding="async">
           {% else %}
             📚
           {% endif %}

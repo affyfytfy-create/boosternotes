@@ -41,6 +41,7 @@ class DropboxPaths:
     NAVBAR    = f"{ROOT}/Navbar"
     BANNERS   = f"{ROOT}/Banners"
     CATEGORIES = f"{ROOT}/Categories"
+    PWA       = f"{ROOT}/PWA"
 
     @staticmethod
     def _slug(name: str) -> str:
@@ -73,8 +74,8 @@ class DropboxPaths:
 
     # ─ HardBook paths ───────────────────────────────────────────────────────────────
     @classmethod
-    def hardbooks_images(cls) -> str:
-        return f"{cls.HARDBOOKS}/Images"
+    def hardbooks_images(cls, book_title: str) -> str:
+        return f"{cls.HARDBOOKS}/{cls._slug(book_title)}/Images"
 
     # ─ site-customization paths ────────────────────────────────────────────────────
     @classmethod
@@ -88,6 +89,10 @@ class DropboxPaths:
     @classmethod
     def banners(cls) -> str:
         return cls.BANNERS
+
+    @classmethod
+    def pwa_icons(cls) -> str:
+        return f"{cls.PWA}/Icons"
 
     @classmethod
     def categories(cls) -> str:

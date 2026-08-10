@@ -335,7 +335,7 @@
     <div class="cat-header-left">
       <h2>
         {% if category.image_url %}
-          <img src="{{ category.image_url }}" alt="" style="width:32px;height:32px;border-radius:8px;object-fit:cover;">
+          <img src="{{ category.image_url }}" alt="" style="width:32px;height:32px;border-radius:8px;object-fit:cover;" loading="lazy" decoding="async">
         {% else %}
           <i class="fa-solid fa-folder-open"></i>
         {% endif %}
@@ -360,10 +360,8 @@
         <div class="pdf-card-search">
           <a href="{% url 'elibrary_detail' course.pk %}" style="text-decoration:none;color:inherit;">
             <div class="pdf-thumb-search">
-              {% if course.thumbnail %}
-                <img src="{{ course.thumbnail.url }}" alt="{{ course.title|default:course.name }}">
-              {% elif course.image %}
-                <img src="{{ course.image.url }}" alt="{{ course.title|default:course.name }}">
+              {% if course.thumbnail_url %}
+                <img src="{{ course.thumbnail_url }}" alt="{{ course.title|default:course.name }}" loading="lazy" decoding="async">
               {% else %}
                 <span class="pdf-emoji">📘</span>
               {% endif %}

@@ -181,6 +181,51 @@ class NavbarSetting(models.Model):
         return None
 
 
+class PWASettings(models.Model):
+    app_name = models.CharField(max_length=100, default="BoosterNotes", verbose_name="App Name")
+    icon = models.ImageField(upload_to='pwa/', blank=True, null=True, verbose_name="App Icon")
+    icon_dropbox_path = models.CharField(max_length=500, blank=True, null=True)
+    icon_dropbox_url_cached = models.CharField(max_length=1000, blank=True, null=True, verbose_name="Cached Dropbox Icon URL")
+    icon_dropbox_url_expires = models.DateTimeField(blank=True, null=True, verbose_name="Cached Icon URL Expiry")
+    is_enabled = models.BooleanField(default=False, verbose_name="Enable Install Prompt")
+
+    class Meta:
+        verbose_name = "PWA Setting"
+        verbose_name_plural = "PWA Settings"
+
+    def __str__(self):
+        return f"PWA - {self.app_name}"
+
+    @property
+    def icon_url(self):
+        """Same cache/refresh/fallback pattern as ELibraryModel.thumbnail_url."""
+        if self.icon_dropbox_url_cached and self.icon_dropbox_url_expires:
+            if self.icon_dropbox_url_expires > timezone.now() + timedelta(minutes=30):
+                return self.icon_dropbox_url_cached
+
+        if self.icon_dropbox_path:
+            try:
+                from .dropbox_utils import DropboxManager
+                link = DropboxManager.get_temporary_link(self.icon_dropbox_path)
+                if link:
+                    PWASettings.objects.filter(pk=self.pk).update(
+                        icon_dropbox_url_cached=link,
+                        icon_dropbox_url_expires=timezone.now() + timedelta(hours=4),
+                    )
+                    return link
+            except Exception:
+                pass
+            if self.icon_dropbox_url_cached:
+                return self.icon_dropbox_url_cached
+
+        if self.icon:
+            try:
+                return self.icon.url
+            except Exception:
+                pass
+        return None
+
+
 class BannerSetting(models.Model):
     BANNER_TYPE_CHOICES = [('desktop', 'Desktop'), ('mobile', 'Mobile')]
     image = models.ImageField(upload_to='banners/', verbose_name="Banner Image", blank=True, null=True)

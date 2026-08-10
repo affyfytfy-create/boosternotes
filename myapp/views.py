@@ -231,6 +231,9 @@ def apply_cart_coupon(request):
     if coupon.remaining_uses <= 0:
         messages.error(request, '\u274c Coupon usage limit reached.')
         return redirect('cart')
+    if request.user.is_authenticated and CouponUsage.objects.filter(user=request.user, coupon=coupon).exists():
+        messages.warning(request, '\u26a0\ufe0f You have already used this coupon.')
+        return redirect('cart')
     request.session['applied_coupon_id']     = coupon.id
     request.session['applied_coupon_code']   = coupon.code
     request.session['applied_coupon_amount'] = str(coupon.amount)
@@ -296,7 +299,7 @@ def all_categories(request):
 # ── Category Courses (public) ───────────────────────────────────────────────────────
 def category_courses_view(request, category_id):
     category = get_object_or_404(Category, id=category_id, is_active=True)
-    elibrary_courses = ELibraryModel.objects.filter(category=category, is_active=True).select_related('category').only('id', 'name', 'current_price', 'original_price', 'thumbnail', 'dropbox_thumbnail_path', 'category_id')
+    elibrary_courses = ELibraryModel.objects.filter(category=category, is_active=True).select_related('category').only('id', 'name', 'current_price', 'original_price', 'thumbnail', 'dropbox_thumbnail_path', 'dropbox_thumbnail_url_cached', 'dropbox_thumbnail_url_expires', 'category_id')
     hardcopy_courses = HardBook.objects.filter(is_active=True).prefetch_related(Prefetch('images', queryset=HardBookImage.objects.order_by('uploaded_at'))) if hasattr(HardBook, 'category') else []
     total_courses = elibrary_courses.count()
     return render(request, 'category_courses.html', {'category': category, 'elibrary_courses': elibrary_courses, 'hardcopy_courses': hardcopy_courses, 'total_courses': total_courses, 'navbar': _get_navbar(), 'footer': _get_footer(), 'cart_count': len(request.session.get('cart', {}))})
@@ -307,8 +310,8 @@ def search(request):
     query = request.GET.get('q', '').strip()
     if query:
         category_results = Category.objects.filter(name__icontains=query, is_active=True)
-        elibrary_results = ELibraryModel.objects.filter(name__icontains=query, is_active=True).select_related('category').only('id', 'name', 'current_price', 'thumbnail', 'dropbox_thumbnail_path', 'category_id')
-        hardbook_results = HardBook.objects.filter(title__icontains=query, is_active=True).prefetch_related(Prefetch('images', queryset=HardBookImage.objects.order_by('uploaded_at')[:1]))
+        elibrary_results = ELibraryModel.objects.filter(name__icontains=query, is_active=True).select_related('category').only('id', 'name', 'current_price', 'original_price', 'thumbnail', 'dropbox_thumbnail_path', 'dropbox_thumbnail_url_cached', 'dropbox_thumbnail_url_expires', 'category_id')
+        hardbook_results = HardBook.objects.filter(title__icontains=query, is_active=True).prefetch_related(Prefetch('images', queryset=HardBookImage.objects.order_by('uploaded_at')))
     else:
         category_results = Category.objects.none()
         elibrary_results = ELibraryModel.objects.none()
@@ -354,8 +357,8 @@ def hard_book_add(request):
             for i, file_obj in enumerate(files[:5], start=1):
                 result = DropboxManager.upload_file(
                     file_obj=file_obj,
-                    file_name=f"{book.title.replace(' ', '_')}_{i}_{file_obj.name}",
-                    folder_path=DropboxPaths.hardbooks_images(),
+                    file_name=f"{i}_{file_obj.name}",
+                    folder_path=DropboxPaths.hardbooks_images(book.title),
                 )
                 if result['success']:
                     HardBookImage.objects.create(book=book, dropbox_path=result['dropbox_path'])
@@ -381,8 +384,8 @@ def hard_book_edit(request, pk):
             for i, file_obj in enumerate(files[:available_slots], start=1):
                 result = DropboxManager.upload_file(
                     file_obj=file_obj,
-                    file_name=f"{book.title.replace(' ', '_')}_{i}_{file_obj.name}",
-                    folder_path=DropboxPaths.hardbooks_images(),
+                    file_name=f"{i}_{file_obj.name}",
+                    folder_path=DropboxPaths.hardbooks_images(book.title),
                 )
                 if result['success']:
                     HardBookImage.objects.create(book=book, dropbox_path=result['dropbox_path'])
@@ -803,6 +806,38 @@ def footer_custom(request):
     return render(request, 'footer.html', {'form': form})
 
 
+# ── PWA Settings (admin) ────────────────────────────────────────────────────────
+@login_required
+def pwa_custom(request):
+    setting = get_or_create_setting(PWASettings)
+    if request.method == 'POST':
+        form = PWASettingsForm(request.POST, request.FILES, instance=setting)
+        if form.is_valid():
+            setting = form.save(commit=False)
+
+            if 'icon' in request.FILES:
+                icon_file = request.FILES['icon']
+                result = DropboxManager.upload_file(
+                    file_obj=icon_file,
+                    file_name=icon_file.name,
+                    folder_path=DropboxPaths.pwa_icons(),
+                )
+                if result['success']:
+                    setting.icon_dropbox_path = result['dropbox_path']
+                else:
+                    messages.warning(request, f"Icon Dropbox upload failed: {result['error']}")
+                icon_file.seek(0)
+
+            setting.save()
+            cache.delete('pwa_setting')
+            messages.success(request, 'PWA settings updated successfully!')
+            return redirect('pwa_custom')
+        messages.error(request, 'Please correct the errors below.')
+    else:
+        form = PWASettingsForm(instance=setting)
+    return render(request, 'pwa_settings.html', {'form': form, 'object': setting})
+
+
 # ── Category admin ─────────────────────────────────────────────────────────────
 @login_required
 def category_list(request):
@@ -1173,11 +1208,25 @@ def elibrary_pdf_preview(request, pdf_id):
         try:
             dbx  = DropboxManager.get_dropbox_client()
             path = pdf.dropbox_path if pdf.dropbox_path.startswith('/') else '/' + pdf.dropbox_path
+
+            # Dropbox's content_hash changes only when the file is actually
+            # replaced, so it doubles as a perfect ETag — lets repeat views
+            # skip the full download via a 304 instead of re-fetching every time.
+            meta = dbx.files_get_metadata(path)
+            etag = f'"{meta.content_hash}"'
+            if request.META.get('HTTP_IF_NONE_MATCH') == etag:
+                not_modified = HttpResponse(status=304)
+                not_modified['ETag']          = etag
+                not_modified['Cache-Control'] = 'private, max-age=3600'
+                return not_modified
+
             _metadata, response = dbx.files_download(path)
             pdf_bytes = response.content
             http_response = HttpResponse(pdf_bytes, content_type='application/pdf')
             http_response['Content-Disposition'] = disposition
             http_response['Content-Length']      = str(len(pdf_bytes))
+            http_response['ETag']                = etag
+            http_response['Cache-Control']        = 'private, max-age=3600'
             return http_response
         except Exception:
             pass

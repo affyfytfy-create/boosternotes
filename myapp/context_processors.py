@@ -1,5 +1,5 @@
 from django.core.cache import cache
-from .models import NavbarSetting, FooterSetting, StatsSetting
+from .models import NavbarSetting, FooterSetting, StatsSetting, PWASettings
 
 
 def global_settings(request):
@@ -24,11 +24,17 @@ def global_settings(request):
         stats = list(StatsSetting.objects.filter(is_active=True).order_by('display_order'))
         cache.set('stats_setting', stats, 3600)
 
+    pwa = cache.get('pwa_setting')
+    if pwa is None:
+        pwa = PWASettings.objects.first()
+        cache.set('pwa_setting', pwa, 3600)
+
     return {
         'navbar':        navbar,
         'site_settings': navbar,   # alias: used for logo / brand_name in templates
         'footer':        footer,
         'stats':         stats,
+        'pwa':           pwa,
     }
 
 

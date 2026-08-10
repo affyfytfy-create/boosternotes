@@ -14,7 +14,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from .models import Order, OrderItem, ELibraryModel, HardBook, Coupon
+from .models import Order, OrderItem, ELibraryModel, HardBook, Coupon, CouponUsage
 
 
 def _get_razorpay_client():
@@ -81,14 +81,21 @@ def razorpay_create_order(request):
 
     subtotal = sum(item['price'] for item in cart_items)
 
-    # Check applied coupon
+    # Check applied coupon — re-validated here (not just trusted from the cart page)
+    # since this is the point the discount actually gets charged.
     discount = 0
     coupon_obj = None
     coupon_id = request.session.get('applied_coupon_id')
     if coupon_id:
         try:
-            coupon_obj = Coupon.objects.get(id=coupon_id, is_active=True)
-            discount = coupon_obj.amount
+            candidate = Coupon.objects.get(id=coupon_id, is_active=True)
+            already_used = CouponUsage.objects.filter(user=request.user, coupon=candidate).exists()
+            if not candidate.is_expired and candidate.remaining_uses > 0 and not already_used:
+                coupon_obj = candidate
+                discount = coupon_obj.amount
+            else:
+                for key in ('applied_coupon_id', 'applied_coupon_code', 'applied_coupon_amount'):
+                    request.session.pop(key, None)
         except Coupon.DoesNotExist:
             pass
 
@@ -186,6 +193,18 @@ def razorpay_verify_payment(request):
     order.status   = 'paid'
     order.paid_at  = timezone.now()
     order.save()
+
+    # Record coupon usage now that payment is confirmed (enforces single-use-per-user
+    # and usage_limit, neither of which was previously being tracked anywhere).
+    if order.coupon_id:
+        from django.db.models import F
+        from .models import CouponUsage
+        CouponUsage.objects.get_or_create(
+            user=request.user,
+            coupon=order.coupon,
+            defaults={'discount_applied': order.discount_amount},
+        )
+        Coupon.objects.filter(pk=order.coupon_id).update(times_used=F('times_used') + 1)
 
     # Clear cart + coupon from session
     for key in ('cart', 'applied_coupon_id', 'applied_coupon_code', 'applied_coupon_amount'):

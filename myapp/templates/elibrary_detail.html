@@ -201,8 +201,8 @@
     </h3>
     <div class="elib-overview">
       <div class="elib-thumb-box">
-        {% if pdf.thumbnail %}
-          <img src="{{ pdf.thumbnail.url }}" alt="{{ pdf.name }}" loading="lazy">
+        {% if pdf.thumbnail_url %}
+          <img src="{{ pdf.thumbnail_url }}" alt="{{ pdf.name }}" fetchpriority="high" decoding="async">
         {% else %}
           📘
         {% endif %}

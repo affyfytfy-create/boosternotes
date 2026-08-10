@@ -5,6 +5,7 @@ from django.urls import reverse_lazy
 from myapp import views
 from myapp import razorpay_views
 from myapp.backup_views import backup_panel
+from myapp.pwa_views import pwa_manifest, pwa_service_worker
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -73,6 +74,11 @@ urlpatterns = [
     path('stats/delete/<int:pk>/', views.stats_delete, name='stats_delete'),
     path('about/', views.about_custom, name='about_custom'),
     path('footer/', views.footer_custom, name='footer_custom'),
+    path('pwa/', views.pwa_custom, name='pwa_custom'),
+
+    # PWA — manifest + service worker (root scope so the SW controls the whole site)
+    path('manifest.json', pwa_manifest, name='pwa_manifest'),
+    path('sw.js', pwa_service_worker, name='pwa_service_worker'),
 
     # E-Library
     path('elibrary/', views.elibrary_dashboard, name='elibrary_dashboard'),

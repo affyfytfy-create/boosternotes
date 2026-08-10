@@ -113,6 +113,17 @@ class NavbarSettingForm(forms.ModelForm):
         }
 
 
+class PWASettingsForm(forms.ModelForm):
+    class Meta:
+        model = PWASettings
+        fields = ['app_name', 'icon', 'is_enabled']
+        widgets = {
+            'app_name': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'e.g., BoosterNotes'}),
+            'icon': forms.FileInput(attrs={'class': 'form-input', 'accept': 'image/*'}),
+            'is_enabled': forms.CheckboxInput(attrs={'class': 'form-input'}),
+        }
+
+
 class BannerUploadForm(forms.Form):
     image = forms.ImageField(
         widget=forms.FileInput(attrs={
