@@ -442,7 +442,7 @@
       <div class="gallery-grid">
         {% for img in book_images %}
           {% if img.preview_url %}
-          <div class="gallery-item" onclick="openLightbox({{ forloop.index0 }})">
+          <div class="gallery-item" onclick="openLightbox({{ forloop.counter0 }})">
             <img src="{{ img.preview_url }}" alt="{{ book.title }} image {{ forloop.counter }}" loading="lazy" decoding="async">
           </div>
           {% endif %}
