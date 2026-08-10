@@ -14,13 +14,20 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from .models import Order, OrderItem, ELibraryModel, HardBook, Coupon, CouponUsage
+from .models import Order, OrderItem, ELibraryModel, HardBook, Coupon, CouponUsage, RazorpaySettings
+
+
+def _get_razorpay_keys():
+    """Admin-configured keys (Razorpay Settings page) take priority; falls back to settings.py."""
+    saved = RazorpaySettings.objects.filter(id=1).first()
+    key_id = (saved.key_id if saved else '') or settings.RAZORPAY_KEY_ID
+    key_secret = (saved.key_secret if saved else '') or settings.RAZORPAY_KEY_SECRET
+    return key_id, key_secret
 
 
 def _get_razorpay_client():
-    return razorpay.Client(
-        auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
-    )
+    key_id, key_secret = _get_razorpay_keys()
+    return razorpay.Client(auth=(key_id, key_secret))
 
 
 def _get_cart(request):
@@ -144,9 +151,10 @@ def razorpay_create_order(request):
             item_price=item['price'],
         )
 
+    razorpay_key, _ = _get_razorpay_keys()
     return JsonResponse({
         'success':           True,
-        'razorpay_key':      settings.RAZORPAY_KEY_ID,
+        'razorpay_key':      razorpay_key,
         'razorpay_order_id': rz_order['id'],
         'amount':            amount_paise,
         'order_number':      order.order_number,
@@ -171,9 +179,10 @@ def razorpay_verify_payment(request):
     order_id      = body.get('internal_order_id', '')
 
     # Signature verification
+    _, razorpay_secret = _get_razorpay_keys()
     msg = f"{rz_order_id}|{rz_payment_id}"
     expected_sig = hmac.new(
-        settings.RAZORPAY_KEY_SECRET.encode(),
+        razorpay_secret.encode(),
         msg.encode(),
         hashlib.sha256
     ).hexdigest()

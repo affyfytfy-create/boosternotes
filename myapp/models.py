@@ -135,6 +135,25 @@ class PWASettings(models.Model):
         )
 
 
+class RazorpaySettings(models.Model):
+    key_id = models.CharField(max_length=200, blank=True, verbose_name="Razorpay Key ID")
+    key_secret = models.CharField(max_length=200, blank=True, verbose_name="Razorpay Key Secret")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Razorpay Setting"
+        verbose_name_plural = "Razorpay Settings"
+
+    def __str__(self):
+        return "Razorpay Settings"
+
+    @property
+    def key_secret_masked(self):
+        if not self.key_secret:
+            return None
+        return f"{'•' * 10}{self.key_secret[-4:]}"
+
+
 class BannerSetting(models.Model):
     BANNER_TYPE_CHOICES = [('desktop', 'Desktop'), ('mobile', 'Mobile')]
     image = models.ImageField(upload_to='banners/', verbose_name="Banner Image", blank=True, null=True)

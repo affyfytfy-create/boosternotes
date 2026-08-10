@@ -75,6 +75,7 @@ urlpatterns = [
     path('about/', views.about_custom, name='about_custom'),
     path('footer/', views.footer_custom, name='footer_custom'),
     path('pwa/', views.pwa_custom, name='pwa_custom'),
+    path('razorpay-settings/', views.razorpay_custom, name='razorpay_custom'),
 
     # PWA — manifest + service worker (root scope so the SW controls the whole site)
     path('manifest.json', pwa_manifest, name='pwa_manifest'),

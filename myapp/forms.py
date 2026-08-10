@@ -124,6 +124,20 @@ class PWASettingsForm(forms.ModelForm):
         }
 
 
+class RazorpaySettingsForm(forms.ModelForm):
+    key_secret = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput(attrs={'class': 'form-input', 'placeholder': 'Leave blank to keep the current key secret', 'autocomplete': 'new-password'}),
+    )
+
+    class Meta:
+        model = RazorpaySettings
+        fields = ['key_id', 'key_secret']
+        widgets = {
+            'key_id': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'rzp_live_...', 'autocomplete': 'off'}),
+        }
+
+
 class BannerUploadForm(forms.Form):
     image = forms.ImageField(
         widget=forms.FileInput(attrs={

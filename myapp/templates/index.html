@@ -560,6 +560,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .elib-card-link {
       display: flex;
       flex-direction: column;
+      flex: 1;
       text-decoration: none;
       color: inherit;
       cursor: pointer;
@@ -759,6 +760,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .book-card-link {
       display: flex;
       flex-direction: column;
+      flex: 1;
       text-decoration: none;
       color: inherit;
       cursor: pointer;
@@ -1552,6 +1554,78 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }]
       }
     });
+  }
+
+  /* ══════════════════════════════════════════════════
+     Add to Cart — AJAX (no full page reload)
+     Applies to every "Add to Cart" form across the site
+     (they all POST to /cart/add/). "Buy Now" forms carry a
+     hidden redirect_to=checkout field and are left to submit
+     normally, since those are meant to navigate to checkout.
+     ══════════════════════════════════════════════════ */
+  document.addEventListener('submit', function (e) {
+    var form = e.target;
+    if (!(form instanceof HTMLFormElement)) return;
+    if (form.action.indexOf('/cart/add/') === -1) return;
+    if (form.querySelector('input[name="redirect_to"]')) return;
+
+    e.preventDefault();
+    var btn = form.querySelector('button[type="submit"]');
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.65'; }
+
+    fetch(form.action, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      body: new FormData(form),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+        showCartToast(data.message || 'Added to your cart.', data.success ? 'success' : 'error');
+        if (data.success && typeof data.cart_count === 'number') updateCartBadge(data.cart_count);
+      })
+      .catch(function () {
+        if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+        showCartToast('Something went wrong. Please try again.', 'error');
+      });
+  }, true);
+
+  function updateCartBadge(count) {
+    document.querySelectorAll('.cart-fab-badge').forEach(function (el) { el.textContent = count; });
+    var fab = document.querySelector('.cart-fab');
+    if (fab && count > 0 && !fab.querySelector('.cart-fab-badge')) {
+      var span = document.createElement('span');
+      span.className = 'cart-fab-badge';
+      span.textContent = count;
+      fab.appendChild(span);
+    }
+  }
+
+  function showCartToast(message, type) {
+    var wrap = document.getElementById('messagesWrap');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.id = 'messagesWrap';
+      wrap.className = 'messages-wrap';
+      document.body.appendChild(wrap);
+    }
+    var item = document.createElement('div');
+    item.className = 'flash-message ' + (type === 'success' ? 'success' : 'error');
+    var text = document.createElement('div');
+    text.className = 'flash-text';
+    text.textContent = message;
+    var close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'flash-close';
+    close.textContent = '×';
+    close.onclick = function () { item.remove(); };
+    item.appendChild(text);
+    item.appendChild(close);
+    wrap.appendChild(item);
+    setTimeout(function () {
+      item.classList.add('hiding');
+      setTimeout(function () { item.remove(); }, 350);
+    }, 3000);
   }
 
   /* ── Mobile search visibility ── */

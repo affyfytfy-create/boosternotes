@@ -191,20 +191,32 @@ def add_to_cart(request):
     item_id     = request.POST.get('item_id', '').strip()
     item_type   = request.POST.get('item_type', '').strip()
     redirect_to = request.POST.get('redirect_to', '').strip()
+    is_ajax     = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
     redirect_back = request.META.get('HTTP_REFERER', '/')
     if not item_id or item_type not in ('pdf', 'book'):
+        if is_ajax:
+            return JsonResponse({'success': False, 'message': 'Invalid item.'}, status=400)
         messages.error(request, 'Invalid item.')
         return redirect(redirect_back)
 
     cart = _get_cart(request)
-    key  = f"{item_type}_{item_id}"
-    if key not in cart:
+    key       = f"{item_type}_{item_id}"
+    newly_added = key not in cart
+    if newly_added:
         cart[key] = {'id': item_id, 'type': item_type}
         _save_cart(request, cart)
-        messages.success(request, 'Added to your cart.')
+        message = 'Added to your cart.'
     else:
-        messages.info(request, 'Item is already in your cart.')
+        message = 'Item is already in your cart.'
+
+    if is_ajax:
+        return JsonResponse({'success': True, 'message': message, 'cart_count': len(cart)})
+
+    if newly_added:
+        messages.success(request, message)
+    else:
+        messages.info(request, message)
 
     if redirect_to == 'checkout':
         return redirect('checkout')
@@ -872,6 +884,26 @@ def pwa_custom(request):
     else:
         form = PWASettingsForm(instance=setting)
     return render(request, 'pwa_settings.html', {'form': form, 'object': setting})
+
+
+# ── Razorpay Settings (admin) ───────────────────────────────────────────────────
+@login_required
+def razorpay_custom(request):
+    setting = get_or_create_setting(RazorpaySettings)
+    if request.method == 'POST':
+        existing_secret = setting.key_secret
+        form = RazorpaySettingsForm(request.POST, instance=setting)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            if not form.cleaned_data.get('key_secret'):
+                obj.key_secret = existing_secret
+            obj.save()
+            messages.success(request, 'Razorpay settings updated successfully.')
+            return redirect('razorpay_custom')
+        messages.error(request, 'Please correct the errors below.')
+    else:
+        form = RazorpaySettingsForm(instance=setting)
+    return render(request, 'razorpay_settings.html', {'form': form, 'object': setting})
 
 
 # ── Category admin ─────────────────────────────────────────────────────────────
