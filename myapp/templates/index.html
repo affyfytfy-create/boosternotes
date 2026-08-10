@@ -78,6 +78,52 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     }
     @keyframes bn-spin { to { transform: rotate(360deg); } }
 
+    /* ── Floating cart button (homepage only, WhatsApp-bubble style) ── */
+    .cart-fab {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 9998;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1a3a8f, #0d6efd);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      text-decoration: none;
+      box-shadow: 0 6px 20px rgba(26,58,143,0.4);
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .cart-fab:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 10px 26px rgba(26,58,143,0.5);
+      color: #fff;
+    }
+    .cart-fab-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: #e53935;
+      color: #fff;
+      font-size: .68rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #fff;
+      font-family: 'Poppins', sans-serif;
+    }
+    @media (max-width: 480px) {
+      .cart-fab { width: 50px; height: 50px; right: 14px; bottom: 14px; font-size: 1.25rem; }
+    }
+
     /* ── Mobile profile avatar button ── */
     .mob-profile-wrap { display:none; position:relative; }
     .mob-avatar-btn {
@@ -1004,6 +1050,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 {% include "coupon_data.html" %}
 
 {% block content %}
+<!-- ── Floating cart button ── -->
+<a href="{% url 'cart' %}" class="cart-fab" aria-label="Open cart">
+  🛒
+  {% if cart_count %}<span class="cart-fab-badge">{{ cart_count }}</span>{% endif %}
+</a>
+
 <!-- ── Banner Slider ── -->
 <div class="banner-wrap">
   <div class="banner-slider desktop-banner" id="desktopBanner">
